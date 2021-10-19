@@ -3,6 +3,7 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import time
 import random
+import math
 
 from Ponto import Ponto
 from Personagem import Personagem
@@ -172,11 +173,41 @@ def desenha(x,y,index):
 
 def desenha_player():
 
+    t = player.t
+    curva_atual = player.curva
+    if player.voltando ==0:
+        a = pontos[curvas[curva_atual][0]].x
+        b = pontos[curvas[curva_atual][1]].x
+        c = pontos[curvas[curva_atual][2]].x
+        ay = pontos[curvas[curva_atual][0]].y
+        by = pontos[curvas[curva_atual][1]].y
+        cy = pontos[curvas[curva_atual][2]].y 
+    else:
+        a = pontos[curvas[curva_atual][2]].x
+        b = pontos[curvas[curva_atual][1]].x
+        c = pontos[curvas[curva_atual][0]].x
+        ay = pontos[curvas[curva_atual][2]].y
+        by = pontos[curvas[curva_atual][1]].y
+        cy = pontos[curvas[curva_atual][0]].y 
+
+    a = float(a)
+    b = float(b)
+    c = float(c)
+    ay = float(ay)
+    by = float(by)
+    cy = float(cy)
+    tangente = 2*c*t - 2*b*t + 2*b*(1-t) - 2 * a*(1-t)
+    tangentey = 2*cy*t - 2*by*t + 2*by*(1-t) - 2 * ay*(1-t)
+
+    angulo = math.atan2(tangente,tangentey)
+    angulo = math.degrees(angulo)
+
+
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
 
     glTranslatef(player.x,player.y,0)
-    glRotatef(45,0,0,1)
+    glRotatef(-angulo,0,0,1)
 
     glBegin(GL_TRIANGLES)
 
