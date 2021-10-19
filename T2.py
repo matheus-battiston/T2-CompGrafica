@@ -286,6 +286,9 @@ def avanca():
 
         player.t = 0
     if player.t == 0.5:
+        prox_curva()
+
+def prox_curva():
         curva_atual = player.curva
         ponto_final = player.ponto_chegada
         aleatorio = random.randint(0,len(decisao[ponto_final])-1)
@@ -295,6 +298,8 @@ def avanca():
             player.vai_voltar = 0
         else:
             player.vai_voltar = 1
+
+
 
 
 # **********************************************************************
@@ -345,7 +350,9 @@ def keyboard(*args):
         os._exit(0)         # a tecla ESC for pressionada
 
     if args[0] == b' ':
-        init()
+        prox_curva()
+        
+
 
     # Força o redesenho da tela
     glutPostRedisplay()
