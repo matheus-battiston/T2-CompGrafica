@@ -17,6 +17,8 @@ class Personagem:
         self.voltando = 0
         self.ponto_saida = 0
         self.ponto_chegada = 3
+        self.velocidade = 5
+        self.selecionado = 0
 
     def atualiza(self):
         self.x2 = self.x + 1

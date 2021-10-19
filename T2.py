@@ -24,6 +24,42 @@ player = Personagem()
 teste = 0
 decisao = []
 
+def calcula_delta(comprimento):
+    deslocamento = comprimento / player.velocidade
+
+
+
+def calculaDistancia(ponto1,ponto2):
+    xa = ponto1[0]
+    ya = ponto1[1]
+    xb = ponto2[0]
+    yb = ponto2[1]
+    z = ((xb-xa)**2 + (yb-ya)**2)
+    return z
+
+
+
+def calculaComprimentoDaCurva(curva):
+
+    ponto1 = curvas[curva][0]
+    ponto2 = curvas[curva][1]
+    ponto3 = curvas[curva][2]
+
+
+    DeltaT = 1.0/50
+    t=DeltaT
+    ComprimentoTotalDaCurva = 0
+    P1 = calc_bezier(ponto1,ponto2,ponto3,t)
+    while(t<1.0):
+        P2 = calc_bezier(ponto1,ponto2,ponto3,t)
+        ComprimentoTotalDaCurva += calculaDistancia(P1,P2)
+        P1 = P2
+        t += DeltaT
+
+    ComprimentoTotalDaCurva += calculaDistancia(P1,P2)
+    print("Comprimento da curva ", ComprimentoTotalDaCurva)
+    return ComprimentoTotalDaCurva
+
 def leitura(arquivo):
     ponto = []
     arq = open(arquivo)
@@ -73,6 +109,10 @@ def leituraCurvas(arquivo):
     arq.close()
     return curvas
 
+def primeira_curva():
+    player.curva = random.randint(0,len(curvas)) -1 
+    player.ponto_saida = curvas[player.curva][0]
+    player.ponto_chegada = curvas[player.curva][2]
 
 def init():
 
@@ -86,14 +126,9 @@ def init():
     curvas = leituraCurvas("Curvas.txt")
     player.x = float(pontos[curvas[0][0]].x)
     player.y = float(pontos[curvas[0][0]].x)
-    player.curva = 0
-    print(decisao)
+    primeira_curva()
 
-
-    print(curvas)
-    
-
-    
+   
 # **********************************************************************
 #  reshape( w: int, h: int )
 #  trata o redimensionamento da janela OpenGL
@@ -141,24 +176,36 @@ def DesenhaCenario():
 # Funcao que exibe os desenhos na tela
 #
 # **********************************************************************
-
-def bezier():
-    global pontos
+def trac_bezier():
+    t = 0
+    glBegin(GL_LINE_STRIP)
     for index, pont in enumerate(curvas):
-        if len(pont) == 3:
-            ponto1 = (pontos[pont[0]].x,pontos[pont[0]].y)
-            ponto2 = (pontos[pont[1]].x,pontos[pont[1]].y)
-            ponto3 = (pontos[pont[2]].x,pontos[pont[2]].y)
-            t = 0.0
+        t = 0
+        while t <= 1:
+            bez = calc_bezier (pont[0],pont[1],pont[2],t)
+            if index == player.proxima:
+                glColor3d(0, 1, 0)
+            else:
+                glColor3d(1, 0, 0)
 
-            while t <= 1:
-                UmMenosT = 1 - t
-                b1 = float(ponto1[0]) * UmMenosT * UmMenosT + float(ponto2[0]) * 2 * UmMenosT * t + float(ponto3[0]) * t*t
-                b2 = float(ponto1[1]) * UmMenosT * UmMenosT + float(ponto2[1]) * 2 * UmMenosT * t + float(ponto3[1]) * t*t
-                desenha(b1,b2,index)
-                t += 0.001
+            glVertex2f(bez[0],bez[1])
+
+            t += 0.001
+
+    glEnd()
+
+def calc_bezier(pnt1,pnt2,pnt3,t):
+        ponto1 = pontos[pnt1]
+        ponto2 = pontos[pnt2]
+        ponto3 = pontos[pnt3]
+        UmMenosT = 1 - t
+        b1 = float(ponto1.x) * UmMenosT * UmMenosT + float(ponto2.x) * 2 * UmMenosT * t + float(ponto3.x) * t*t
+        b2 = float(ponto1.y) * UmMenosT * UmMenosT + float(ponto2.y) * 2 * UmMenosT * t + float(ponto3.y) * t*t
+
+        return(b1,b2)
 
 def desenha(x,y,index):
+    glLineWidth(3)
     glPointSize(4)
     if index == player.proxima:
         glColor3d(0, 1, 0)
@@ -166,7 +213,8 @@ def desenha(x,y,index):
         glColor3d(1, 0, 0)
 
     
-    glBegin(GL_POINTS)
+    glBegin(GL_LINE_STRIP)
+
     glVertex2f(x,y)
   
     glEnd()
@@ -222,10 +270,6 @@ def desenha_player():
     glutSwapBuffers()
 
 
-
-
-
-
 def display():
     global pontos
     # Limpa a tela com  a cor de fundo
@@ -234,7 +278,7 @@ def display():
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
 
-    bezier()
+    trac_bezier()
     DesenhaCenario()
     desenha_player()
 
@@ -246,7 +290,6 @@ def avanca():
     global curvas
     curva_atual = player.curva
     proxima_curva = player.proxima
-    time.sleep(0.01)
 
     t = player.t
     if player.voltando == 0:
@@ -271,22 +314,28 @@ def avanca():
         b2 = float(ponto1y) * UmMenosT * UmMenosT + float(ponto2y) * 2 * UmMenosT * t + float(ponto3y) * t*t
         player.x = b1
         player.y = b2
-        player.t = round(player.t + 0.01, 2)
+        deltat = player.velocidade/calculaComprimentoDaCurva(player.curva)
+        deltat = deltat/100
+        player.t = round(player.t + deltat, 10)
     if player.t >= 1:
+        player.selecionado = 0
         player.voltando = player.vai_voltar
         player.vai_voltar = 0 
         player.curva = player.proxima
-        player.proxima = 99
         if player.voltando == 0:
             player.ponto_saida = int(curvas[player.curva][0])
             player.ponto_chegada = int(curvas[player.curva][2])
         else:
             player.ponto_saida = int(curvas[player.curva][2])
             player.ponto_chegada = int(curvas[player.curva][0])
-
+        
         player.t = 0
-    if player.t == 0.5:
+
+        calculaComprimentoDaCurva(player.curva)
+
+    if player.t >= 0.5 and player.selecionado != 1 :
         prox_curva()
+        player.selecionado = 1
 
 def prox_curva():
         curva_atual = player.curva
