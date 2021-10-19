@@ -2,6 +2,7 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import time
+import random
 
 from Ponto import Ponto
 from Personagem import Personagem
@@ -19,6 +20,8 @@ ListaFinal = []
 pontos = []
 curvas = []
 player = Personagem()
+teste = 0
+decisao = []
 
 def leitura(arquivo):
     ponto = []
@@ -38,15 +41,27 @@ def leitura(arquivo):
     return ponto
 
 def leituraCurvas(arquivo):
+    global decisao
     curvas = []
     curva = []
     arq = open(arquivo)
     linhas = arq.readlines()
     n_curvas = int(linhas.pop(0))
 
+    for x in range (0,len(pontos)):
+        decisao.append([])
+    
+
 
     for index, line in enumerate(linhas):
         aux = line.split(' ')
+        primeiro = int(aux[0])
+        ultimo = int(aux[2])
+        if index not in decisao[primeiro]:
+            decisao[primeiro].append(index)
+        if index not in decisao[ultimo]:
+            decisao[ultimo].append(index)
+
         for ponto in aux:
             curva.append(int(ponto.replace('\n', '')))
         curvas.append(curva)
@@ -63,13 +78,16 @@ def init():
     global pontos
     global curvas
     global player
+    global decisao
     # Define a cor do fundo da tela (BRANCO) 
     glClearColor(1.0, 1.0, 1.0, 1.0)
     pontos = leitura("pontos.txt")
     curvas = leituraCurvas("Curvas.txt")
-    player.x = float(pontos[1].x)
-    player.y = float(pontos[1].y)
-    
+    player.x = float(pontos[curvas[0][0]].x)
+    player.y = float(pontos[curvas[0][0]].x)
+    player.curva = 0
+    print(decisao)
+
 
     print(curvas)
     
@@ -125,7 +143,7 @@ def DesenhaCenario():
 
 def bezier():
     global pontos
-    for pont in curvas:
+    for index, pont in enumerate(curvas):
         if len(pont) == 3:
             ponto1 = (pontos[pont[0]].x,pontos[pont[0]].y)
             ponto2 = (pontos[pont[1]].x,pontos[pont[1]].y)
@@ -136,29 +154,46 @@ def bezier():
                 UmMenosT = 1 - t
                 b1 = float(ponto1[0]) * UmMenosT * UmMenosT + float(ponto2[0]) * 2 * UmMenosT * t + float(ponto3[0]) * t*t
                 b2 = float(ponto1[1]) * UmMenosT * UmMenosT + float(ponto2[1]) * 2 * UmMenosT * t + float(ponto3[1]) * t*t
-                desenha(b1,b2)
+                desenha(b1,b2,index)
                 t += 0.001
 
-def desenha(x,y):
+def desenha(x,y,index):
     glPointSize(4)
-    glColor3d(1, 0, 0)
+    if index == player.proxima:
+        glColor3d(0, 1, 0)
+    else:
+        glColor3d(1, 0, 0)
+
+    
     glBegin(GL_POINTS)
     glVertex2f(x,y)
   
     glEnd()
 
 def desenha_player():
-    x = float(player.x)
-    y = float(player.y)
+
+    glMatrixMode(GL_MODELVIEW)
+    glLoadIdentity()
+
+    glTranslatef(player.x,player.y,0)
+    glRotatef(45,0,0,1)
+
     glBegin(GL_TRIANGLES)
 
-    glColor3f(0.5,0,0)
+    glColor3f(0,0,1)
+    glVertex2f(0,3)
+    glVertex2f(-2,-3)
+    glVertex2f(2,-3)
 
-    glVertex2f(x,y)
-    glVertex2f(x-1,y-3)
-    glVertex2f(x+1,y-3)
 
     glEnd()
+
+    glutSwapBuffers()
+
+
+
+
+
 
 def display():
     global pontos
@@ -175,23 +210,61 @@ def display():
     glutSwapBuffers()
 
 def avanca():
+    global teste
     global pontos
-    time.sleep(0.1)
+    global curvas
+    curva_atual = player.curva
+    proxima_curva = player.proxima
+    time.sleep(0.01)
 
     t = player.t
-    ponto1x = pontos[1].x
-    ponto2x = pontos[2].x
-    ponto3x = pontos[3].x
-    ponto1y = pontos[1].y
-    ponto2y = pontos[2].y
-    ponto3y = pontos[3].y
+    if player.voltando == 0:
+        ponto1x = pontos[curvas[curva_atual][0]].x
+        ponto2x = pontos[curvas[curva_atual][1]].x
+        ponto3x = pontos[curvas[curva_atual][2]].x
+        ponto1y = pontos[curvas[curva_atual][0]].y
+        ponto2y = pontos[curvas[curva_atual][1]].y
+        ponto3y = pontos[curvas[curva_atual][2]].y 
+    elif player.voltando == 1:
+        ponto1x = pontos[curvas[curva_atual][2]].x
+        ponto2x = pontos[curvas[curva_atual][1]].x
+        ponto3x = pontos[curvas[curva_atual][0]].x
+        ponto1y = pontos[curvas[curva_atual][2]].y
+        ponto2y = pontos[curvas[curva_atual][1]].y
+        ponto3y = pontos[curvas[curva_atual][0]].y 
+          
+
     if player.t <= 1:
         UmMenosT = 1 - t
         b1 = float(ponto1x) * UmMenosT * UmMenosT + float(ponto2x) * 2 * UmMenosT * t + float(ponto3x) * t*t
         b2 = float(ponto1y) * UmMenosT * UmMenosT + float(ponto2y) * 2 * UmMenosT * t + float(ponto3y) * t*t
-    player.x = b1
-    player.y = b2
-    player.t += 0.01
+        player.x = b1
+        player.y = b2
+        player.t = round(player.t + 0.01, 2)
+    if player.t >= 1:
+        player.voltando = player.vai_voltar
+        player.vai_voltar = 0 
+        player.curva = player.proxima
+        player.proxima = 99
+        if player.voltando == 0:
+            player.ponto_saida = int(curvas[player.curva][0])
+            player.ponto_chegada = int(curvas[player.curva][2])
+        else:
+            player.ponto_saida = int(curvas[player.curva][2])
+            player.ponto_chegada = int(curvas[player.curva][0])
+
+        player.t = 0
+    if player.t == 0.5:
+        curva_atual = player.curva
+        ponto_final = player.ponto_chegada
+        aleatorio = random.randint(0,len(decisao[ponto_final])-1)
+        player.proxima = decisao[ponto_final][aleatorio]
+
+        if player.ponto_chegada == curvas[player.proxima][0]:
+            player.vai_voltar = 0
+        else:
+            player.vai_voltar = 1
+
 
 # **********************************************************************
 # animate()
@@ -224,10 +297,7 @@ def animate():
         
         TempoTotal = 0
         nFrames = 0
-        
-        print(f'Contador de Intersecoes Existentes: {ContadorInt/2.0}')
-        print(f'Contador de Chamadas: {ContChamadas}')
-        print( f'Subdivisões', Subdivisoes)
+
 
     avanca()
 
@@ -290,7 +360,7 @@ glutInitDisplayMode(GLUT_RGBA)
 glutInitWindowPosition(0, 0)
 
 # Define o tamanho inicial da janela grafica do programa
-glutInitWindowSize(1366, 768)
+glutInitWindowSize(700, 700)
 # Cria a janela na tela, definindo o nome da
 # que aparecera na barra de título da janela.
 glutInitWindowPosition(100, 100)
