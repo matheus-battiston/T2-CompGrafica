@@ -26,6 +26,15 @@ class Personagem:
         self.selecionado = 0
         self.parado = 0
         self.inimigo = False
+        self.xs =[0,-2,2]
+        self.ys = [3,-3,-3]
+        self.x1 = 0
+        self.y1 = 3
+        self.x2 =-2
+        self.y2 = -3
+        self.x3 = 2
+        self.y3 = -3
+
     
     
     def avanca(self):
@@ -125,7 +134,24 @@ class Personagem:
             self.prox_curva()
             self.selecionado = 1
 
+    def translate(self):
+        self.xs[0] = self.x
+        self.xs[1] = self.x -2
+        self.xs[2] = self.x + 2
+        self.ys[0] = self.y + 3
+        self.ys[1] = -3+self.y
+        self.ys[2] = -3 +self.y
 
+    def rotate(self,angulo):
+        angulo = math.radians(-angulo)
+        
+        self.xs[0] = (self.x1 * math.cos(angulo) - self.y1 * math.sin(angulo))
+        self.ys[0] = (self.x1 * math.sin(angulo) + self.y1 * math.cos(angulo))
+        self.xs[1] = (self.x2 * math.cos(angulo) - self.y2 * math.sin(angulo))
+        self.ys[1] = (self.x2 * math.sin(angulo) + self.y2 * math.cos(angulo))
+        self.xs[2] = (self.x3 * math.cos(angulo) - self.y3 * math.sin(angulo))
+        self.ys[2] = (self.x3 * math.sin(angulo) + self.y3 * math.cos(angulo))
+                 
     def desenha_personagem(self):
         tangente = self.calcula_pontos_tgt()
         rota = self.calcula_angulo_rotacao(tangente)
@@ -135,6 +161,10 @@ class Personagem:
 
         glTranslatef(self.x,self.y,0)
         glRotatef(-rota,0,0,1)
+        self.rotate(rota)
+        self.translate()
+
+
 
         glBegin(GL_TRIANGLES)
         if self.inimigo == True:
@@ -281,7 +311,6 @@ def calculaComprimentoDaCurva(curva):
         t += DeltaT
 
     ComprimentoTotalDaCurva += calculaDistancia(P1,P2)
-    print(ComprimentoTotalDaCurva)
     return ComprimentoTotalDaCurva
 
 def comprimentos():
@@ -331,7 +360,6 @@ def inicializa_inimigos():
     for index, i in enumerate(inimigos):
         inimigos[index] = Personagem()
         inimigos[index].t = random.random()
-        print(inimigos[index].t)
         inimigos[index].velocidade = 100
         inimigos[index].curva = random.randint(0,len(curvas)-1)
         inimigos[index].ponto_saida = curvas[inimigos[index].curva][0]
@@ -432,6 +460,48 @@ def colisao_envelope(ini,play):
 
     return True 
     
+def perdeu2():
+    PA = Ponto()
+    PB = Ponto()
+    PC = Ponto()
+    PD = Ponto()
+    PE = Ponto()
+    PF = Ponto()
+
+    PA.set(player.xs[0],player.ys[0])
+    PB.set(player.xs[1],player.ys[1])
+    PC.set(player.xs[2],player.ys[2])
+
+    PD.set(inimigos[0].xs[0],inimigos[0].ys[0])
+    PE.set(inimigos[0].xs[1],inimigos[0].ys[1])
+    PF.set(inimigos[0].xs[2],inimigos[0].ys[2])
+
+
+    if HaInterseccao(PA,PB,PE,PF):
+        print("1")
+        return True
+    elif HaInterseccao(PA,PB,PD,PE):
+        print("2")
+        return True
+
+    elif HaInterseccao(PB,PC,PD,PE):
+        print("3")
+        return True
+
+    elif HaInterseccao(PD,PE, PB,PC):
+        print("4")
+        return True
+
+    """for x in inimigos:
+        PA.set(player.x1,player.y1)
+        PB.set(player.x3,player.y3)
+        if x.curva == player.curva:
+            PC.set(x.x1,x.y1)
+            PD.set(x.x2,x.y2)
+            if HaInterseccao(PA, PB, PC, PD):
+                return True"""
+    return False
+
 def perdeu():
     for x in inimigos:
         tinimigo = round(x.t,3)
@@ -447,8 +517,9 @@ def perdeu():
                 if colisao_envelope(x,player):
                     return True
     return False
-
+avanco = 0
 def display():
+    global avanco
     global cont
     global pontos
     global inimigos
@@ -465,14 +536,18 @@ def display():
     for x in inimigos:
         x.desenha_personagem()
 
-    if perdeu():
-        os._exit(0)
 
     if player.parado == 0:
         player.avanca()
     for x in inimigos:
         x.avanca()
-        
+
+    if avanco >3:
+        if perdeu2():
+            os._exit(0)
+
+    avanco += 1
+
 
 
 
