@@ -281,6 +281,7 @@ def calculaComprimentoDaCurva(curva):
         t += DeltaT
 
     ComprimentoTotalDaCurva += calculaDistancia(P1,P2)
+    print(ComprimentoTotalDaCurva)
     return ComprimentoTotalDaCurva
 
 def comprimentos():
@@ -319,23 +320,47 @@ def trac_bezier():
 
 
 def primeira_curva():
-    player.curva = random.randint(0,len(curvas)) -1 
+    player.curva = random.randint(0,len(curvas)-1) 
     player.ponto_saida = curvas[player.curva][0]
     player.ponto_chegada = curvas[player.curva][2]
 
 def inicializa_inimigos():
     global inimigos
-    for x in range(0,10):
+    for x in range(0,1):
         inimigos.append(None)
     for index, i in enumerate(inimigos):
         inimigos[index] = Personagem()
         inimigos[index].t = random.random()
-        inimigos[index].velocidade = 50
-        inimigos[index].curva = random.randint(0,len(curvas)) -1
+        print(inimigos[index].t)
+        inimigos[index].velocidade = 100
+        inimigos[index].curva = random.randint(0,len(curvas)-1)
         inimigos[index].ponto_saida = curvas[inimigos[index].curva][0]
         inimigos[index].ponto_chegada = curvas[inimigos[index].curva][2]
         inimigos[index].inimigo = True
 
+
+def intersec2d(k: Ponto, l: Ponto, m: Ponto, n: Ponto):
+    det = (n.x - m.x) * (l.y - k.y)  -  (n.y - m.y) * (l.x - k.x)
+
+    if (det == 0.0):
+        return 0, None, None # não há intersecção
+
+    s = ((n.x - m.x) * (m.y - k.y) - (n.y - m.y) * (m.x - k.x))/ det
+    t = ((l.x - k.x) * (m.y - k.y) - (l.y - k.y) * (m.x - k.x))/ det
+
+    return 1, s, t # há intersecção
+
+# **********************************************************************
+# HaInterseccao(k: Ponto, l: Ponto, m: Ponto, n: Ponto)
+# Detecta interseccao entre os pontos
+#
+# **********************************************************************
+def HaInterseccao(k: Ponto, l: Ponto, m: Ponto, n: Ponto) -> bool:
+    ret, s, t = intersec2d( k,  l,  m,  n)
+
+    if not ret: return False
+
+    return s>=0.0 and s <=1.0 and t>=0.0 and t<=1.0
 
 
 def init():
@@ -399,7 +424,29 @@ def DesenhaCenario():
 # Funcao que exibe os desenhos na tela
 #
 # **********************************************************************
+def colisao_envelope(ini,play):
+    if (abs(ini.x - play.x) > 2 + 2):
+        return False
+    elif abs(ini.y - ini.y) > 3 + 3:
+        return False
 
+    return True 
+    
+def perdeu():
+    for x in inimigos:
+        tinimigo = round(x.t,3)
+        tplayer = round(player.t,3)
+        if x.curva == player.curva:
+            if x.voltando == 0 and player.voltando == 1:
+                if abs(tinimigo - round(1-tplayer,3)) <= 0.01:
+                    return True
+            elif x.voltando == 1 and player.voltando == 0:
+                if abs(round(1-tinimigo,3) - tplayer) <= 0.01:
+                    return True
+            elif (x.voltando == 1 and player.voltando == 1) or (x.voltando == 0 and player.voltando == 0):
+                if colisao_envelope(x,player):
+                    return True
+    return False
 
 def display():
     global cont
@@ -414,11 +461,18 @@ def display():
     trac_bezier()
     DesenhaCenario()
     player.desenha_personagem()
+
+    for x in inimigos:
+        x.desenha_personagem()
+
+    if perdeu():
+        os._exit(0)
+
     if player.parado == 0:
         player.avanca()
     for x in inimigos:
-        x.desenha_personagem()
         x.avanca()
+        
 
 
 
