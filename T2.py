@@ -1,3 +1,4 @@
+#Alunos: Matheus Felipe Battiston e Henrique Andreata
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -5,19 +6,129 @@ import time
 import random
 import math
 import timeit
-
 from Ponto import Ponto
-from Personagem import Personagem
+
+
+class Personagem:
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.t = 0
+        self.z = 0
+        self.curva = 0
+        self.proxima = 99
+        self.inicio = 99
+        self.vai_voltar = 0
+        self.voltando = 0
+        self.ponto_saida = 0
+        self.ponto_chegada = 3
+        self.velocidade = 100
+        self.selecionado = 0
+        self.parado = 0
+    
+    
+    def avanca(self):
+        global pontos
+        global curvas
+        global comprimentos
+        curva_atual = self.curva
+        proxima_curva = self.proxima
+
+        t = self.t
+        if self.voltando == 0:
+            ponto1x = pontos[curvas[curva_atual][0]].x
+            ponto2x = pontos[curvas[curva_atual][1]].x
+            ponto3x = pontos[curvas[curva_atual][2]].x
+            ponto1y = pontos[curvas[curva_atual][0]].y
+            ponto2y = pontos[curvas[curva_atual][1]].y
+            ponto3y = pontos[curvas[curva_atual][2]].y 
+        elif player.voltando == 1:
+            ponto1x = pontos[curvas[curva_atual][2]].x
+            ponto2x = pontos[curvas[curva_atual][1]].x
+            ponto3x = pontos[curvas[curva_atual][0]].x
+            ponto1y = pontos[curvas[curva_atual][2]].y
+            ponto2y = pontos[curvas[curva_atual][1]].y
+            ponto3y = pontos[curvas[curva_atual][0]].y 
+            
+
+        if self.t <= 1:
+            UmMenosT = 1 - t
+            b1 = float(ponto1x) * UmMenosT * UmMenosT + float(ponto2x) * 2 * UmMenosT * t + float(ponto3x) * t*t
+            b2 = float(ponto1y) * UmMenosT * UmMenosT + float(ponto2y) * 2 * UmMenosT * t + float(ponto3y) * t*t
+            self.x = b1
+            self.y = b2
+            deltat = (self.velocidade * 0.033)/tamanho_curva[self.curva]
+            self.t = round(self.t + deltat, 10)
+        if self.t >= 1:
+            self.selecionado = 0
+            self.voltando = self.vai_voltar
+            self.vai_voltar = 0 
+            self.curva = self.proxima
+            if self.voltando == 0:
+                self.ponto_saida = int(curvas[self.curva][0])
+                self.ponto_chegada = int(curvas[self.curva][2])
+            else:
+                self.ponto_saida = int(curvas[self.curva][2])
+                self.ponto_chegada = int(curvas[self.curva][0])
+            
+            self.t = 0
+
+        if self.t >= 0.5 and self.selecionado != 1 :
+            self.prox_curva()
+            self.selecionado = 1
+
+    def prox_curva(self):
+        global decisao
+        curva_atual = self.curva
+        ponto_final = self.ponto_chegada
+        aleatorio = random.randint(0,len(decisao[ponto_final])-1)
+        self.proxima = decisao[ponto_final][aleatorio]
+
+        if self.ponto_chegada == curvas[self.proxima][0]:
+            self.vai_voltar = 0
+        else:
+            self.vai_voltar = 1
+
+    def select_nova_curva(self):
+        curva_atual = self.curva
+        ponto_final = self.ponto_chegada
+        proxima = self.proxima
+
+        if len(decisao[ponto_final]) == 1:
+            pass
+        else:
+            index = decisao[ponto_final].index(self.proxima)
+            if index == len(decisao[ponto_final])-1:
+                self.proxima = decisao[ponto_final][0]
+            else:
+                self.proxima = decisao[ponto_final][index+1]
+        
+            if self.ponto_chegada == curvas[self.proxima][0]:
+                self.vai_voltar = 0
+            else:
+                self.vai_voltar = 1
+
+    def voltar(self):
+        if self.voltando == 1:
+            self.voltando = 0
+        else:
+            self.voltando = 1
+        self.selecionado = 0
+        self.t = 1-self.t
+        aux = self.ponto_chegada
+        self.ponto_chegada = self.ponto_saida
+        self.ponto_saida = aux
+        if self.t >= 0.5:
+            self.prox_curva()
+            self.selecionado = 1
+
 
 MAX_X = 100
-
 pontos = []
 curvas = []
 player = Personagem()
 decisao = []
 tamanho_curva = []
-
-
 #**************************************************************************************************************************
 #Leituras
 
@@ -206,72 +317,6 @@ def desenha_player():
 #**************************************************************************************************************************************
 
 
-def avanca():
-    global pontos
-    global curvas
-    global comprimentos
-    curva_atual = player.curva
-    proxima_curva = player.proxima
-
-    t = player.t
-    if player.voltando == 0:
-        ponto1x = pontos[curvas[curva_atual][0]].x
-        ponto2x = pontos[curvas[curva_atual][1]].x
-        ponto3x = pontos[curvas[curva_atual][2]].x
-        ponto1y = pontos[curvas[curva_atual][0]].y
-        ponto2y = pontos[curvas[curva_atual][1]].y
-        ponto3y = pontos[curvas[curva_atual][2]].y 
-    elif player.voltando == 1:
-        ponto1x = pontos[curvas[curva_atual][2]].x
-        ponto2x = pontos[curvas[curva_atual][1]].x
-        ponto3x = pontos[curvas[curva_atual][0]].x
-        ponto1y = pontos[curvas[curva_atual][2]].y
-        ponto2y = pontos[curvas[curva_atual][1]].y
-        ponto3y = pontos[curvas[curva_atual][0]].y 
-          
-
-    if player.t <= 1:
-        UmMenosT = 1 - t
-        b1 = float(ponto1x) * UmMenosT * UmMenosT + float(ponto2x) * 2 * UmMenosT * t + float(ponto3x) * t*t
-        b2 = float(ponto1y) * UmMenosT * UmMenosT + float(ponto2y) * 2 * UmMenosT * t + float(ponto3y) * t*t
-        player.x = b1
-        player.y = b2
-        deltat = (player.velocidade * 0.033)/tamanho_curva[player.curva]
-        player.t = round(player.t + deltat, 10)
-    if player.t >= 1:
-        player.selecionado = 0
-        player.voltando = player.vai_voltar
-        player.vai_voltar = 0 
-        player.curva = player.proxima
-        if player.voltando == 0:
-            player.ponto_saida = int(curvas[player.curva][0])
-            player.ponto_chegada = int(curvas[player.curva][2])
-        else:
-            player.ponto_saida = int(curvas[player.curva][2])
-            player.ponto_chegada = int(curvas[player.curva][0])
-        
-        player.t = 0
-
-
-    if player.t >= 0.5 and player.selecionado != 1 :
-        prox_curva()
-        player.selecionado = 1
-
-def prox_curva():
-        curva_atual = player.curva
-        ponto_final = player.ponto_chegada
-        aleatorio = random.randint(0,len(decisao[ponto_final])-1)
-        player.proxima = decisao[ponto_final][aleatorio]
-
-        if player.ponto_chegada == curvas[player.proxima][0]:
-            player.vai_voltar = 0
-        else:
-            player.vai_voltar = 1
-
-
-
-
-
 def primeira_curva():
     player.curva = random.randint(0,len(curvas)) -1 
     player.ponto_saida = curvas[player.curva][0]
@@ -350,7 +395,8 @@ def display():
     trac_bezier()
     DesenhaCenario()
     desenha_player()
-    avanca()
+    if player.parado == 0:
+        player.avanca()
 
 
     glutSwapBuffers()
@@ -395,7 +441,7 @@ def keyboard(*args):
         os._exit(0)         # a tecla ESC for pressionada
 
     if args[0] == b' ':
-        prox_curva()
+        player.select_nova_curva ()
         
 
 
@@ -416,9 +462,12 @@ def arrow_keys(a_keys: int, x: int, y: int):
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
         pass
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
-        pass
+        if player.parado == 0:
+            player.parado = 1
+        else:
+            player.parado = 0
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
-        pass
+        player.voltar()
     if a_keys == GLUT_KEY_RIGHT:      # Se pressionar RIGHT
         pass
 
