@@ -25,6 +25,7 @@ class Personagem:
         self.velocidade = 100
         self.selecionado = 0
         self.parado = 0
+        self.inimigo = False
     
     
     def avanca(self):
@@ -35,6 +36,7 @@ class Personagem:
         proxima_curva = self.proxima
 
         t = self.t
+        print(self.voltando)
         if self.voltando == 0:
             ponto1x = pontos[curvas[curva_atual][0]].x
             ponto2x = pontos[curvas[curva_atual][1]].x
@@ -42,7 +44,7 @@ class Personagem:
             ponto1y = pontos[curvas[curva_atual][0]].y
             ponto2y = pontos[curvas[curva_atual][1]].y
             ponto3y = pontos[curvas[curva_atual][2]].y 
-        elif player.voltando == 1:
+        elif self.voltando == 1:
             ponto1x = pontos[curvas[curva_atual][2]].x
             ponto2x = pontos[curvas[curva_atual][1]].x
             ponto3x = pontos[curvas[curva_atual][0]].x
@@ -123,15 +125,79 @@ class Personagem:
             self.selecionado = 1
 
 
+    def desenha_personagem(self):
+        tangente = self.calcula_pontos_tgt()
+        rota = self.calcula_angulo_rotacao(tangente)
+
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+
+        glTranslatef(self.x,self.y,0)
+        glRotatef(-rota,0,0,1)
+
+        glBegin(GL_TRIANGLES)
+        if self.inimigo == True:
+            glColor3f(1,0,0)
+        else:
+            glColor3f(0,0,1)
+        glVertex2f(0,3)
+        glVertex2f(-2,-3)
+        glVertex2f(2,-3)
+
+        glEnd()
+        glutSwapBuffers()
+
+
+    def calcula_pontos_tgt(self):
+        global pontos, curvas
+        t = self.t
+        curva_atual = self.curva
+        if self.voltando ==0:
+            a = pontos[curvas[curva_atual][0]].x
+            b = pontos[curvas[curva_atual][1]].x
+            c = pontos[curvas[curva_atual][2]].x
+            ay = pontos[curvas[curva_atual][0]].y
+            by = pontos[curvas[curva_atual][1]].y
+            cy = pontos[curvas[curva_atual][2]].y 
+        else:
+            a = pontos[curvas[curva_atual][2]].x
+            b = pontos[curvas[curva_atual][1]].x
+            c = pontos[curvas[curva_atual][0]].x
+            ay = pontos[curvas[curva_atual][2]].y
+            by = pontos[curvas[curva_atual][1]].y
+            cy = pontos[curvas[curva_atual][0]].y 
+
+
+        a = float(a)
+        b = float(b)
+        c = float(c)
+        ay = float(ay)
+        by = float(by)
+        cy = float(cy)
+        tangentex = 2*c*t - 2*b*t + 2*b*(1-t) - 2 * a*(1-t)
+        tangentey = 2*cy*t - 2*by*t + 2*by*(1-t) - 2 * ay*(1-t)
+
+        return tangentex,tangentey
+
+    def calcula_angulo_rotacao(self,pontostgt):
+        angulo = math.atan2(pontostgt[0],pontostgt[1])
+        angulo = math.degrees(angulo)
+
+        return angulo
+
+
+
+
+
 MAX_X = 100
 pontos = []
 curvas = []
 player = Personagem()
+inimigos = []
 decisao = []
 tamanho_curva = []
 #**************************************************************************************************************************
 #Leituras
-
 
 def leitura(arquivo):
     ponto = []
@@ -193,44 +259,6 @@ def calc_bezier(pnt1,pnt2,pnt3,t):
 
         return(b1,b2)
 
-def calcula_pontos_tgt():
-    global pontos, curvas
-    t = player.t
-    curva_atual = player.curva
-    if player.voltando ==0:
-        a = pontos[curvas[curva_atual][0]].x
-        b = pontos[curvas[curva_atual][1]].x
-        c = pontos[curvas[curva_atual][2]].x
-        ay = pontos[curvas[curva_atual][0]].y
-        by = pontos[curvas[curva_atual][1]].y
-        cy = pontos[curvas[curva_atual][2]].y 
-    else:
-        a = pontos[curvas[curva_atual][2]].x
-        b = pontos[curvas[curva_atual][1]].x
-        c = pontos[curvas[curva_atual][0]].x
-        ay = pontos[curvas[curva_atual][2]].y
-        by = pontos[curvas[curva_atual][1]].y
-        cy = pontos[curvas[curva_atual][0]].y 
-
-
-    a = float(a)
-    b = float(b)
-    c = float(c)
-    ay = float(ay)
-    by = float(by)
-    cy = float(cy)
-    tangentex = 2*c*t - 2*b*t + 2*b*(1-t) - 2 * a*(1-t)
-    tangentey = 2*cy*t - 2*by*t + 2*by*(1-t) - 2 * ay*(1-t)
-
-    return tangentex,tangentey
-
-def calcula_angulo_rotacao(pontostgt):
-    angulo = math.atan2(pontostgt[0],pontostgt[1])
-    angulo = math.degrees(angulo)
-
-    return angulo
-
-
 def calculaDistancia(ponto1,ponto2):
     xa = ponto1[0]
     ya = ponto1[1]
@@ -239,13 +267,11 @@ def calculaDistancia(ponto1,ponto2):
     z = ((xb-xa)**2 + (yb-ya)**2)
     return z
 
-
 def calculaComprimentoDaCurva(curva):
 
     ponto1 = curvas[curva][0]
     ponto2 = curvas[curva][1]
     ponto3 = curvas[curva][2]
-
 
     DeltaT = 1.0/50
     t=DeltaT
@@ -259,7 +285,6 @@ def calculaComprimentoDaCurva(curva):
 
     ComprimentoTotalDaCurva += calculaDistancia(P1,P2)
     return ComprimentoTotalDaCurva
-
 
 def comprimentos():
     global curvas
@@ -293,27 +318,6 @@ def trac_bezier():
     glEnd()
 
 
-def desenha_player():
-    tangente = calcula_pontos_tgt()
-    rota = calcula_angulo_rotacao(tangente)
-
-    glMatrixMode(GL_MODELVIEW)
-    glLoadIdentity()
-
-    glTranslatef(player.x,player.y,0)
-    glRotatef(-rota,0,0,1)
-
-    glBegin(GL_TRIANGLES)
-
-    glColor3f(0,0,1)
-    glVertex2f(0,3)
-    glVertex2f(-2,-3)
-    glVertex2f(2,-3)
-
-    glEnd()
-    glutSwapBuffers()
-
-
 #**************************************************************************************************************************************
 
 
@@ -322,14 +326,31 @@ def primeira_curva():
     player.ponto_saida = curvas[player.curva][0]
     player.ponto_chegada = curvas[player.curva][2]
 
+def inicializa_inimigos():
+    global inimigos
+    for x in range(0,1):
+        inimigos.append(None)
+    for index, i in enumerate(inimigos):
+        inimigos[index] = Personagem()
+        inimigos[index].t = random.random()
+        inimigos[index].velocidade = 100
+        inimigos[index].curva = random.randint(0,len(curvas)) -1
+        inimigos[index].ponto_saida = curvas[inimigos[index].curva][0]
+        inimigos[index].ponto_chegada = curvas[inimigos[index].curva][2]
+        inimigos[index].inimigo = True
+
+
+
 def init():
 
     global pontos
     global curvas
+    
     # Define a cor do fundo da tela (BRANCO) 
     glClearColor(1.0, 1.0, 1.0, 1.0)
     pontos = leitura("pontos.txt")
     curvas = leituraCurvas("Curvas.txt")
+    inicializa_inimigos()
     comprimentos()
     primeira_curva()
 
@@ -386,6 +407,7 @@ def DesenhaCenario():
 def display():
     global cont
     global pontos
+    global inimigos
     # Limpa a tela com  a cor de fundo
     glClear(GL_COLOR_BUFFER_BIT)
 
@@ -394,7 +416,11 @@ def display():
 
     trac_bezier()
     DesenhaCenario()
-    desenha_player()
+    for x in inimigos:
+        x.desenha_personagem()
+        x.avanca()
+
+    player.desenha_personagem()
     if player.parado == 0:
         player.avanca()
 
@@ -441,10 +467,12 @@ def keyboard(*args):
         os._exit(0)         # a tecla ESC for pressionada
 
     if args[0] == b' ':
-        player.select_nova_curva ()
+        if player.parado == 0:
+            player.parado = 1
+        else:
+            player.parado = 0
         
-
-
+        
     # Força o redesenho da tela
     glutPostRedisplay()
 
@@ -461,11 +489,8 @@ def arrow_keys(a_keys: int, x: int, y: int):
 
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
         pass
-    if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
-        if player.parado == 0:
-            player.parado = 1
-        else:
-            player.parado = 0
+    if a_keys == GLUT_KEY_DOWN:      # Se pressionar DOWN
+        player.select_nova_curva ()
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
         player.voltar()
     if a_keys == GLUT_KEY_RIGHT:      # Se pressionar RIGHT
