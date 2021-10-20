@@ -97,6 +97,8 @@ class Personagem:
         if len(decisao[ponto_final]) == 1:
             pass
         else:
+            if self.proxima == 99:
+                self.proxima = decisao[ponto_final][0]
             index = decisao[ponto_final].index(self.proxima)
             if index == len(decisao[ponto_final])-1:
                 self.proxima = decisao[ponto_final][0]
@@ -118,6 +120,7 @@ class Personagem:
         aux = self.ponto_chegada
         self.ponto_chegada = self.ponto_saida
         self.ponto_saida = aux
+        self.proxima = 99
         if self.t >= 0.5:
             self.prox_curva()
             self.selecionado = 1
