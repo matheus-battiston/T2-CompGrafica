@@ -31,12 +31,10 @@ class Personagem:
     def avanca(self):
         global pontos
         global curvas
-        global comprimentos
         curva_atual = self.curva
         proxima_curva = self.proxima
 
         t = self.t
-        print(self.voltando)
         if self.voltando == 0:
             ponto1x = pontos[curvas[curva_atual][0]].x
             ponto2x = pontos[curvas[curva_atual][1]].x
@@ -145,7 +143,6 @@ class Personagem:
         glVertex2f(2,-3)
 
         glEnd()
-        glutSwapBuffers()
 
 
     def calcula_pontos_tgt(self):
@@ -184,9 +181,6 @@ class Personagem:
         angulo = math.degrees(angulo)
 
         return angulo
-
-
-
 
 
 MAX_X = 100
@@ -328,12 +322,12 @@ def primeira_curva():
 
 def inicializa_inimigos():
     global inimigos
-    for x in range(0,1):
+    for x in range(0,10):
         inimigos.append(None)
     for index, i in enumerate(inimigos):
         inimigos[index] = Personagem()
         inimigos[index].t = random.random()
-        inimigos[index].velocidade = 100
+        inimigos[index].velocidade = 50
         inimigos[index].curva = random.randint(0,len(curvas)) -1
         inimigos[index].ponto_saida = curvas[inimigos[index].curva][0]
         inimigos[index].ponto_chegada = curvas[inimigos[index].curva][2]
@@ -416,13 +410,14 @@ def display():
 
     trac_bezier()
     DesenhaCenario()
+    player.desenha_personagem()
+    if player.parado == 0:
+        player.avanca()
     for x in inimigos:
         x.desenha_personagem()
         x.avanca()
 
-    player.desenha_personagem()
-    if player.parado == 0:
-        player.avanca()
+
 
 
     glutSwapBuffers()
