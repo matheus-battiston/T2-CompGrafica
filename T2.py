@@ -164,9 +164,11 @@ class Personagem:
         self.rotate(rota)
         self.translate()
 
+
+
         glBegin(GL_TRIANGLES)
         if self.inimigo == True:
-            glColor3f(1,0,0)
+            glColor3f(0,1,0)
         else:
             glColor3f(0,0,1)
         glVertex2f(0,3)
@@ -221,6 +223,7 @@ player = Personagem()
 inimigos = []
 decisao = []
 tamanho_curva = []
+bezier = []
 #**************************************************************************************************************************
 #Leituras
 
@@ -324,21 +327,30 @@ def comprimentos():
 #**************************************************************************************************************************************
 #Desenhos
 
-def trac_bezier():
-    t = 0
-    glBegin(GL_LINE_STRIP)
+def define_bezier():
+    global bezier
+    for x in range (0,len(curvas)):
+        bezier.append([])
     for index, pont in enumerate(curvas):
         t = 0
         while t <= 1:
             bez = calc_bezier (pont[0],pont[1],pont[2],t)
+            bezier[index].append((bez[0],bez[1]))
+            t += 0.001
+
+def trac_bezier():
+    t = 0
+    glLineWidth(5)
+    glBegin(GL_LINE_STRIP)
+    
+    for index, x in enumerate(bezier):
+        for y in x:
             if index == player.proxima:
                 glColor3d(0, 1, 0)
             else:
                 glColor3d(1, 0, 0)
 
-            glVertex2f(bez[0],bez[1])
-
-            t += 0.001
+            glVertex2f(y[0],y[1])
 
     glEnd()
 
@@ -353,7 +365,7 @@ def primeira_curva():
 
 def inicializa_inimigos():
     global inimigos
-    for x in range(0,3):
+    for x in range(0,10):
         inimigos.append(None)
     for index, i in enumerate(inimigos):
         inimigos[index] = Personagem()
@@ -398,6 +410,7 @@ def init():
     glClearColor(1.0, 1.0, 1.0, 1.0)
     pontos = leitura("pontos.txt")
     curvas = leituraCurvas("Curvas.txt")
+    define_bezier()
     inicializa_inimigos()
     comprimentos()
     primeira_curva()
@@ -476,35 +489,35 @@ def perdeu2():
         PE.set(x.xs[1],x.ys[1])
         PF.set(x.xs[2],x.ys[2])
 
-        if colisao_envelope(x,player) and x.curva == player.curva:
+        if x.voltando == 1:
+            init = 1 - x.t
+        else:
+            init = x.t
+
+        if player.voltando == 1:
+            playt = 1-player.t
+        else:
+            playt = player.t
+
+
+        difabs = abs(init-playt)
+        difabs = round(difabs,3)
+        if x.curva == player.curva:
+            print(difabs)
+
+        if colisao_envelope(x,player) and x.curva == player.curva and difabs <= 0.1:
             if HaInterseccao(PA,PB,PE,PF):
                 print("1")
                 return True
             elif HaInterseccao(PA,PB,PD,PE):
                 print("2")
                 return True
-
             elif HaInterseccao(PB,PC,PD,PE):
                 print("3")
                 return True
  
     return False
 
-def perdeu():
-    for x in inimigos:
-        tinimigo = round(x.t,3)
-        tplayer = round(player.t,3)
-        if x.curva == player.curva:
-            if x.voltando == 0 and player.voltando == 1:
-                if abs(tinimigo - round(1-tplayer,3)) <= 0.01:
-                    return True
-            elif x.voltando == 1 and player.voltando == 0:
-                if abs(round(1-tinimigo,3) - tplayer) <= 0.01:
-                    return True
-            elif (x.voltando == 1 and player.voltando == 1) or (x.voltando == 0 and player.voltando == 0):
-                if colisao_envelope(x,player):
-                    return True
-    return False
 avanco = 0
 def display():
     global avanco
@@ -523,8 +536,13 @@ def display():
     for x in inimigos:
         x.desenha_personagem()
 
+    
 
     avanco += 1
+
+
+
+
 
     glutSwapBuffers()
 
