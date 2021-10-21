@@ -22,7 +22,7 @@ class Personagem:
         self.voltando = 0
         self.ponto_saida = 0
         self.ponto_chegada = 3
-        self.velocidade = 100
+        self.velocidade = 30
         self.selecionado = 0
         self.parado = 0
         self.inimigo = False
@@ -163,8 +163,6 @@ class Personagem:
         glRotatef(-rota,0,0,1)
         self.rotate(rota)
         self.translate()
-
-
 
         glBegin(GL_TRIANGLES)
         if self.inimigo == True:
@@ -355,12 +353,12 @@ def primeira_curva():
 
 def inicializa_inimigos():
     global inimigos
-    for x in range(0,1):
+    for x in range(0,3):
         inimigos.append(None)
     for index, i in enumerate(inimigos):
         inimigos[index] = Personagem()
         inimigos[index].t = random.random()
-        inimigos[index].velocidade = 100
+        inimigos[index].velocidade = 30
         inimigos[index].curva = random.randint(0,len(curvas)-1)
         inimigos[index].ponto_saida = curvas[inimigos[index].curva][0]
         inimigos[index].ponto_chegada = curvas[inimigos[index].curva][2]
@@ -472,34 +470,24 @@ def perdeu2():
     PB.set(player.xs[1],player.ys[1])
     PC.set(player.xs[2],player.ys[2])
 
-    PD.set(inimigos[0].xs[0],inimigos[0].ys[0])
-    PE.set(inimigos[0].xs[1],inimigos[0].ys[1])
-    PF.set(inimigos[0].xs[2],inimigos[0].ys[2])
+    for x in inimigos:
 
+        PD.set(x.xs[0],x.ys[0])
+        PE.set(x.xs[1],x.ys[1])
+        PF.set(x.xs[2],x.ys[2])
 
-    if HaInterseccao(PA,PB,PE,PF):
-        print("1")
-        return True
-    elif HaInterseccao(PA,PB,PD,PE):
-        print("2")
-        return True
+        if colisao_envelope(x,player) and x.curva == player.curva:
+            if HaInterseccao(PA,PB,PE,PF):
+                print("1")
+                return True
+            elif HaInterseccao(PA,PB,PD,PE):
+                print("2")
+                return True
 
-    elif HaInterseccao(PB,PC,PD,PE):
-        print("3")
-        return True
-
-    elif HaInterseccao(PD,PE, PB,PC):
-        print("4")
-        return True
-
-    """for x in inimigos:
-        PA.set(player.x1,player.y1)
-        PB.set(player.x3,player.y3)
-        if x.curva == player.curva:
-            PC.set(x.x1,x.y1)
-            PD.set(x.x2,x.y2)
-            if HaInterseccao(PA, PB, PC, PD):
-                return True"""
+            elif HaInterseccao(PB,PC,PD,PE):
+                print("3")
+                return True
+ 
     return False
 
 def perdeu():
@@ -532,25 +520,11 @@ def display():
     trac_bezier()
     DesenhaCenario()
     player.desenha_personagem()
-
     for x in inimigos:
         x.desenha_personagem()
 
 
-    if player.parado == 0:
-        player.avanca()
-    for x in inimigos:
-        x.avanca()
-
-    if avanco >3:
-        if perdeu2():
-            os._exit(0)
-
     avanco += 1
-
-
-
-
 
     glutSwapBuffers()
 
@@ -580,6 +554,14 @@ def animate():
         glutPostRedisplay()
 
 
+    if player.parado == 0:
+        player.avanca()
+    for x in inimigos:
+        x.avanca()
+
+    if avanco >3:
+        if perdeu2():
+            os._exit(0)
 
 # **********************************************************************
 #  keyboard ( key: int, x: int, y: int )
