@@ -30,7 +30,7 @@ class Personagem:
         self.ponto_chegada = 3
         self.velocidade = 30
         self.selecionado = 0
-        self.parado = 0
+        self.parado = False
         self.inimigo = False
         self.xs =[0,-2,2]
         self.ys = [3,-3,-3]
@@ -41,6 +41,27 @@ class Personagem:
         self.x3 = 2
         self.y3 = -3
 
+    def get_pontos(self):
+        curva_atual = self.curva
+        if self.voltando ==0:
+            a = pontos[curvas[curva_atual][0]].x
+            b = pontos[curvas[curva_atual][1]].x
+            c = pontos[curvas[curva_atual][2]].x
+            ay = pontos[curvas[curva_atual][0]].y
+            by = pontos[curvas[curva_atual][1]].y
+            cy = pontos[curvas[curva_atual][2]].y 
+        else:
+            a = pontos[curvas[curva_atual][2]].x
+            b = pontos[curvas[curva_atual][1]].x
+            c = pontos[curvas[curva_atual][0]].x
+            ay = pontos[curvas[curva_atual][2]].y
+            by = pontos[curvas[curva_atual][1]].y
+            cy = pontos[curvas[curva_atual][0]].y 
+
+
+        return a,b,c,ay,by,cy
+
+
     def avanca(self):
         global pontos
         global curvas
@@ -49,23 +70,15 @@ class Personagem:
         proxima_curva = self.proxima
 
         t = self.t
-        if self.voltando == 0:
+        pnts = self.get_pontos()
 
-            ponto1x = pontos[curvas[curva_atual][0]].x
-            ponto2x = pontos[curvas[curva_atual][1]].x
-            ponto3x = pontos[curvas[curva_atual][2]].x
-            ponto1y = pontos[curvas[curva_atual][0]].y
-            ponto2y = pontos[curvas[curva_atual][1]].y
-            ponto3y = pontos[curvas[curva_atual][2]].y 
-        elif self.voltando == 1:
-            ponto1x = pontos[curvas[curva_atual][2]].x
-            ponto2x = pontos[curvas[curva_atual][1]].x
-            ponto3x = pontos[curvas[curva_atual][0]].x
-            ponto1y = pontos[curvas[curva_atual][2]].y
-            ponto2y = pontos[curvas[curva_atual][1]].y
-            ponto3y = pontos[curvas[curva_atual][0]].y 
-            
-
+        ponto1x = pnts[0]
+        ponto2x = pnts[1]
+        ponto3x = pnts[2]
+        ponto1y = pnts[3]
+        ponto2y = pnts[4]
+        ponto3y = pnts[5] 
+        
         if self.t <= 1:
             UmMenosT = 1 - t
             b1 = float(ponto1x) * UmMenosT * UmMenosT + float(ponto2x) * 2 * UmMenosT * t + float(ponto3x) * t*t
@@ -170,8 +183,6 @@ class Personagem:
         self.rotate(rota)
         self.translate()
 
-
-
         glBegin(GL_TRIANGLES)
         if self.inimigo == True:
             glColor(0,1,0)
@@ -183,33 +194,18 @@ class Personagem:
 
         glEnd()
 
-
     def calcula_pontos_tgt(self):
         global pontos, curvas
         t = self.t
-        curva_atual = self.curva
-        if self.voltando ==0:
-            a = pontos[curvas[curva_atual][0]].x
-            b = pontos[curvas[curva_atual][1]].x
-            c = pontos[curvas[curva_atual][2]].x
-            ay = pontos[curvas[curva_atual][0]].y
-            by = pontos[curvas[curva_atual][1]].y
-            cy = pontos[curvas[curva_atual][2]].y 
-        else:
-            a = pontos[curvas[curva_atual][2]].x
-            b = pontos[curvas[curva_atual][1]].x
-            c = pontos[curvas[curva_atual][0]].x
-            ay = pontos[curvas[curva_atual][2]].y
-            by = pontos[curvas[curva_atual][1]].y
-            cy = pontos[curvas[curva_atual][0]].y 
 
+        pnts = self.get_pontos()
 
-        a = float(a)
-        b = float(b)
-        c = float(c)
-        ay = float(ay)
-        by = float(by)
-        cy = float(cy)
+        a = float(pnts[0])
+        b = float(pnts[1])
+        c = float(pnts[2])
+        ay = float(pnts[3])
+        by = float(pnts[4])
+        cy = float(pnts[5])
         tangentex = 2*c*t - 2*b*t + 2*b*(1-t) - 2 * a*(1-t)
         tangentey = 2*cy*t - 2*by*t + 2*by*(1-t) - 2 * ay*(1-t)
 
@@ -339,6 +335,7 @@ def define_bezier():
             bez = calc_bezier (pont[0],pont[1],pont[2],t)
             bezier[index].append((bez[0],bez[1]))
             t += 0.001
+
 def desenha_bezier(indice):
 
     glBegin(GL_LINE_STRIP)
@@ -379,24 +376,19 @@ def inicializa_inimigos():
     for x in range(0,10):
         inimigos.append(None)
     for index, i in enumerate(inimigos):
+        inimigos[index] = Personagem()
+        inimigos[index].t = random.random()
+        inimigos[index].velocidade = 30
+        inimigos[index].curva = random.randint(0,len(curvas)-1)
+        inimigos[index].proxima = 0
+        inimigos[index].inimigo = True
+    
         if index < 5:
-            inimigos[index] = Personagem()
-            inimigos[index].t = random.random()
-            inimigos[index].velocidade = 30
-            inimigos[index].curva = random.randint(0,len(curvas)-1)
-            inimigos[index].proxima = 0
             inimigos[index].ponto_saida = curvas[inimigos[index].curva][0]
             inimigos[index].ponto_chegada = curvas[inimigos[index].curva][2]
-            inimigos[index].inimigo = True
         else:
-            inimigos[index] = Personagem()
-            inimigos[index].t = random.random()
-            inimigos[index].velocidade = 30
-            inimigos[index].curva = random.randint(0,len(curvas)-1)
-            inimigos[index].proxima = 0
             inimigos[index].ponto_saida = curvas[inimigos[index].curva][2]
             inimigos[index].ponto_chegada = curvas[inimigos[index].curva][0]
-            inimigos[index].inimigo = True
             inimigos[index].voltando = 1
 
 
@@ -485,7 +477,7 @@ def colisao_envelope(ini,play):
 
     return True 
     
-def perdeu2():
+def perdeu():
     PA = Ponto()
     PB = Ponto()
     PC = Ponto()
@@ -530,9 +522,7 @@ def perdeu2():
  
     return False
 
-avanco = 0
 def display():
-    global avanco
     global cont
     global pontos
     global inimigos
@@ -547,16 +537,15 @@ def display():
     for x in inimigos:
         x.desenha_personagem()
 
-    if player.parado == 0:
+    if perdeu():
+        os._exit(0)
+    if player.parado == False:
         player.avanca()
     for x in inimigos:
         x.avanca()
 
-    if avanco >3:
-        if perdeu2():
-            os._exit(0)
 
-    avanco += 1
+
     glutSwapBuffers()
 
 
@@ -597,10 +586,10 @@ def keyboard(*args):
         os._exit(0)         # a tecla ESC for pressionada
 
     if args[0] == b' ':
-        if player.parado == 0:
-            player.parado = 1
+        if player.parado == True:
+            player.parado = False
         else:
-            player.parado = 0
+            player.parado = True
         
         
     # Força o redesenho da tela
