@@ -8,6 +8,12 @@ import math
 import timeit
 from Ponto import Ponto
 
+MAX_X = 100
+pontos = []
+inimigos = []
+decisao = []
+tamanho_curva = []
+bezier = []
 
 class Personagem:
     def __init__(self):
@@ -35,16 +41,16 @@ class Personagem:
         self.x3 = 2
         self.y3 = -3
 
-    
-    
     def avanca(self):
         global pontos
         global curvas
         curva_atual = self.curva
+
         proxima_curva = self.proxima
 
         t = self.t
         if self.voltando == 0:
+
             ponto1x = pontos[curvas[curva_atual][0]].x
             ponto2x = pontos[curvas[curva_atual][1]].x
             ponto3x = pontos[curvas[curva_atual][2]].x
@@ -69,6 +75,7 @@ class Personagem:
             deltat = (self.velocidade * 0.033)/tamanho_curva[self.curva]
             self.t = round(self.t + deltat, 10)
         if self.t >= 1:
+            self.t = 0
             self.selecionado = 0
             self.voltando = self.vai_voltar
             self.vai_voltar = 0 
@@ -80,7 +87,6 @@ class Personagem:
                 self.ponto_saida = int(curvas[self.curva][2])
                 self.ponto_chegada = int(curvas[self.curva][0])
             
-            self.t = 0
 
         if self.t >= 0.5 and self.selecionado != 1 :
             self.prox_curva()
@@ -168,9 +174,9 @@ class Personagem:
 
         glBegin(GL_TRIANGLES)
         if self.inimigo == True:
-            glColor3f(0,1,0)
+            glColor(0,1,0)
         else:
-            glColor3f(0,0,1)
+            glColor(0,0,1)
         glVertex2f(0,3)
         glVertex2f(-2,-3)
         glVertex2f(2,-3)
@@ -215,17 +221,13 @@ class Personagem:
 
         return angulo
 
-
-MAX_X = 100
-pontos = []
-curvas = []
-player = Personagem()
-inimigos = []
-decisao = []
-tamanho_curva = []
-bezier = []
 #**************************************************************************************************************************
 #Leituras
+
+player = Personagem()
+curvas = []
+
+
 
 def leitura(arquivo):
     ponto = []
@@ -341,14 +343,15 @@ def define_bezier():
 def trac_bezier():
     t = 0
     glLineWidth(5)
+    glShadeModel(GL_FLAT)
     glBegin(GL_LINE_STRIP)
     
     for index, x in enumerate(bezier):
         for y in x:
             if index == player.proxima:
-                glColor3d(0, 1, 0)
+                glColor3f(0, 1, 0)
             else:
-                glColor3d(1, 0, 0)
+                glColor3f(1, 0, 0)
 
             glVertex2f(y[0],y[1])
 
@@ -372,6 +375,7 @@ def inicializa_inimigos():
         inimigos[index].t = random.random()
         inimigos[index].velocidade = 30
         inimigos[index].curva = random.randint(0,len(curvas)-1)
+        inimigos[index].proxima = 0
         inimigos[index].ponto_saida = curvas[inimigos[index].curva][0]
         inimigos[index].ponto_chegada = curvas[inimigos[index].curva][2]
         inimigos[index].inimigo = True
@@ -502,18 +506,16 @@ def perdeu2():
 
         difabs = abs(init-playt)
         difabs = round(difabs,3)
-        if x.curva == player.curva:
-            print(difabs)
 
-        if colisao_envelope(x,player) and x.curva == player.curva and difabs <= 0.1:
+
+        if x.curva == player.curva and difabs <= 0.1:
             if HaInterseccao(PA,PB,PE,PF):
-                print("1")
                 return True
             elif HaInterseccao(PA,PB,PD,PE):
-                print("2")
                 return True
             elif HaInterseccao(PB,PC,PD,PE):
-                print("3")
+                return True
+            elif HaInterseccao(PB,PC,PD,PF):
                 return True
  
     return False
