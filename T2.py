@@ -339,23 +339,31 @@ def define_bezier():
             bez = calc_bezier (pont[0],pont[1],pont[2],t)
             bezier[index].append((bez[0],bez[1]))
             t += 0.001
+def desenha_bezier(indice):
+
+    glBegin(GL_LINE_STRIP)
+    for x in bezier[indice]:
+        glVertex2f(x[0],x[1])
+
+    glEnd()
 
 def trac_bezier():
+    global bezier
     t = 0
     glLineWidth(5)
     glShadeModel(GL_FLAT)
-    glBegin(GL_LINE_STRIP)
-    
+
     for index, x in enumerate(bezier):
-        for y in x:
-            if index == player.proxima:
-                glColor3f(0, 1, 0)
-            else:
-                glColor3f(1, 0, 0)
 
-            glVertex2f(y[0],y[1])
-
-    glEnd()
+        if index == player.proxima:
+            glColor3f(0,1,0)
+            desenha_bezier(index)
+        elif index == player.curva:
+            glColor3f(0,0,1)
+            desenha_bezier(index)
+        else:
+            glColor3f(1,0,0)
+            desenha_bezier(index)
 
 
 #**************************************************************************************************************************************
@@ -371,14 +379,25 @@ def inicializa_inimigos():
     for x in range(0,10):
         inimigos.append(None)
     for index, i in enumerate(inimigos):
-        inimigos[index] = Personagem()
-        inimigos[index].t = random.random()
-        inimigos[index].velocidade = 30
-        inimigos[index].curva = random.randint(0,len(curvas)-1)
-        inimigos[index].proxima = 0
-        inimigos[index].ponto_saida = curvas[inimigos[index].curva][0]
-        inimigos[index].ponto_chegada = curvas[inimigos[index].curva][2]
-        inimigos[index].inimigo = True
+        if index < 5:
+            inimigos[index] = Personagem()
+            inimigos[index].t = random.random()
+            inimigos[index].velocidade = 30
+            inimigos[index].curva = random.randint(0,len(curvas)-1)
+            inimigos[index].proxima = 0
+            inimigos[index].ponto_saida = curvas[inimigos[index].curva][0]
+            inimigos[index].ponto_chegada = curvas[inimigos[index].curva][2]
+            inimigos[index].inimigo = True
+        else:
+            inimigos[index] = Personagem()
+            inimigos[index].t = random.random()
+            inimigos[index].velocidade = 30
+            inimigos[index].curva = random.randint(0,len(curvas)-1)
+            inimigos[index].proxima = 0
+            inimigos[index].ponto_saida = curvas[inimigos[index].curva][2]
+            inimigos[index].ponto_chegada = curvas[inimigos[index].curva][0]
+            inimigos[index].inimigo = True
+            inimigos[index].voltando = 1
 
 
 def intersec2d(k: Ponto, l: Ponto, m: Ponto, n: Ponto):
@@ -453,15 +472,6 @@ def reshape(w: int, h: int):
 #
 # **********************************************************************
 
-def DesenhaCenario():
-    global ContChamadas, ContadorInt
-    ContChamadas, ContadorInt = 0, 0
-    
-    # Desenha as linhas do cenário
-    glLineWidth(1)
-    glColor3f(1,0,0)
-
-
 # **********************************************************************
 # display()
 # Funcao que exibe os desenhos na tela
@@ -533,19 +543,20 @@ def display():
     glLoadIdentity()
 
     trac_bezier()
-    DesenhaCenario()
     player.desenha_personagem()
     for x in inimigos:
         x.desenha_personagem()
 
-    
+    if player.parado == 0:
+        player.avanca()
+    for x in inimigos:
+        x.avanca()
+
+    if avanco >3:
+        if perdeu2():
+            os._exit(0)
 
     avanco += 1
-
-
-
-
-
     glutSwapBuffers()
 
 
@@ -572,16 +583,6 @@ def animate():
     if AccumDeltaT > 1.0/30:  # fixa a atualização da tela em 30
         AccumDeltaT = 0
         glutPostRedisplay()
-
-
-    if player.parado == 0:
-        player.avanca()
-    for x in inimigos:
-        x.avanca()
-
-    if avanco >3:
-        if perdeu2():
-            os._exit(0)
 
 # **********************************************************************
 #  keyboard ( key: int, x: int, y: int )
