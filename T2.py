@@ -28,7 +28,7 @@ class Personagem:
         self.voltando = 0
         self.ponto_saida = 0
         self.ponto_chegada = 3
-        self.velocidade = 30
+        self.velocidade = 10
         self.selecionado = 0
         self.parado = False
         self.inimigo = False
@@ -36,7 +36,7 @@ class Personagem:
         self.ys = [3,-3,-3]
         self.x1 = 0
         self.y1 = 3
-        self.x2 =-2
+        self.x2 = -2
         self.y2 = -3
         self.x3 = 2
         self.y3 = -3
@@ -44,45 +44,54 @@ class Personagem:
     def get_pontos(self):
         curva_atual = self.curva
         if self.voltando ==0:
-            a = pontos[curvas[curva_atual][0]].x
-            b = pontos[curvas[curva_atual][1]].x
-            c = pontos[curvas[curva_atual][2]].x
-            ay = pontos[curvas[curva_atual][0]].y
-            by = pontos[curvas[curva_atual][1]].y
-            cy = pontos[curvas[curva_atual][2]].y 
-        else:
-            a = pontos[curvas[curva_atual][2]].x
-            b = pontos[curvas[curva_atual][1]].x
-            c = pontos[curvas[curva_atual][0]].x
-            ay = pontos[curvas[curva_atual][2]].y
-            by = pontos[curvas[curva_atual][1]].y
-            cy = pontos[curvas[curva_atual][0]].y 
+            if len(curvas[curva_atual]) == 3:
+                a = curvas[curva_atual][0]
+                b = curvas[curva_atual][1]
+                c = curvas[curva_atual][2]
+            elif len(curvas[curva_atual]) == 4:
+                a = curvas[curva_atual][0]
+                b = curvas[curva_atual][1]
+                c = curvas[curva_atual][2]
+                d = curvas[curva_atual][3]
+
+        elif self.voltando == 1:
+            if len(curvas[curva_atual]) == 3:
+                a = curvas[curva_atual][2]
+                b = curvas[curva_atual][1]
+                c = curvas[curva_atual][0]
+
+            elif len(curvas[curva_atual]) == 4:
+                a = curvas[curva_atual][3]
+                b = curvas[curva_atual][2]
+                c = curvas[curva_atual][1]
+                d = curvas[curva_atual][0]
 
 
-        return a,b,c,ay,by,cy
+
+        if len(curvas[curva_atual]) == 3:
+            return a,b,c
+        elif len(curvas[curva_atual]) == 4:
+            return a,b,c,d
+
 
 
     def avanca(self):
         global pontos
         global curvas
         curva_atual = self.curva
-
         proxima_curva = self.proxima
 
         t = self.t
         pnts = self.get_pontos()
 
-        ponto1x = pnts[0]
-        ponto2x = pnts[1]
-        ponto3x = pnts[2]
-        ponto1y = pnts[3]
-        ponto2y = pnts[4]
-        ponto3y = pnts[5] 
-        
+
         if self.t <= 1:
             UmMenosT = 1 - t
-            b1 = float(ponto1x) * UmMenosT * UmMenosT + float(ponto2x) * 2 * UmMenosT * t + float(ponto3x) * t*t
-            b2 = float(ponto1y) * UmMenosT * UmMenosT + float(ponto2y) * 2 * UmMenosT * t + float(ponto3y) * t*t
+            if len(pnts) == 3:
+                b1,b2 = calc_bezier(pnts[0],pnts[1],pnts[2],t)
+            elif len(pnts) == 4:
+                b1,b2 = calc_bezier4(pnts[0],pnts[1],pnts[2],pnts[3],t)
+
             self.x = b1
             self.y = b2
             deltat = (self.velocidade * 0.033)/tamanho_curva[self.curva]
@@ -95,9 +104,9 @@ class Personagem:
             self.curva = self.proxima
             if self.voltando == 0:
                 self.ponto_saida = int(curvas[self.curva][0])
-                self.ponto_chegada = int(curvas[self.curva][2])
+                self.ponto_chegada = int(curvas[self.curva][len(curvas[self.curva])-1])
             else:
-                self.ponto_saida = int(curvas[self.curva][2])
+                self.ponto_saida = int(curvas[self.curva][len(curvas[self.curva])-1])
                 self.ponto_chegada = int(curvas[self.curva][0])
             
 
@@ -154,15 +163,16 @@ class Personagem:
             self.selecionado = 1
 
     def translate(self):
-        self.xs[0] = self.x
-        self.xs[1] = self.x -2
-        self.xs[2] = self.x + 2
-        self.ys[0] = self.y + 3
-        self.ys[1] = -3+self.y
-        self.ys[2] = -3 +self.y
+        self.xs[0] = self.xs[0] +self.x
+        self.xs[1] = self.xs[1] +self.x
+        self.xs[2] = self.xs[2] + self.x
+        self.ys[0] = self.ys[0] + self.y
+        self.ys[1] = self.y+self.ys[1]
+        self.ys[2] = self.y+self.ys[2]
 
     def rotate(self,angulo):
-        angulo = math.radians(-angulo)
+        angulo = math.radians(angulo)
+        
         
         self.xs[0] = (self.x1 * math.cos(angulo) - self.y1 * math.sin(angulo))
         self.ys[0] = (self.x1 * math.sin(angulo) + self.y1 * math.cos(angulo))
@@ -194,22 +204,38 @@ class Personagem:
 
         glEnd()
 
+
     def calcula_pontos_tgt(self):
         global pontos, curvas
         t = self.t
 
         pnts = self.get_pontos()
 
-        a = float(pnts[0])
-        b = float(pnts[1])
-        c = float(pnts[2])
-        ay = float(pnts[3])
-        by = float(pnts[4])
-        cy = float(pnts[5])
-        tangentex = 2*c*t - 2*b*t + 2*b*(1-t) - 2 * a*(1-t)
-        tangentey = 2*cy*t - 2*by*t + 2*by*(1-t) - 2 * ay*(1-t)
+        if len(pnts) == 3:
+            a = float(pontos[pnts[0]].x)
+            b = float(pontos[pnts[1]].x)
+            c = float(pontos[pnts[2]].x)
+            ay = float(pontos[pnts[0]].y)
+            by = float(pontos[pnts[1]].y)
+            cy = float(pontos[pnts[2]].y)
+            tangentex = 2*c*t - 2*b*t + 2*b*(1-t) - 2 * a*(1-t)
+            tangentey = 2*cy*t - 2*by*t + 2*by*(1-t) - 2 * ay*(1-t)
+
+        elif len(pnts) == 4:
+
+            a = float(pontos[pnts[0]].x)
+            b = float(pontos[pnts[1]].x)
+            c = float(pontos[pnts[2]].x)
+            d = float(pontos[pnts[3]].x)
+            ay = float(pontos[pnts[0]].y)
+            by = float(pontos[pnts[1]].y)
+            cy = float(pontos[pnts[2]].y)
+            dy = float(pontos[pnts[3]].y)
+            tangentex = 3*d*t**2-3*c*t**2+6*c*(1-t)*t-6*b*(1-t)*t+3*b*(1-t)**2-3*a*(1-t)**2
+            tangentey = 3*dy*t**2-3*cy*t**2+6*cy*(1-t)*t-6*by*(1-t)*t+3*by*(1-t)**2-3*ay*(1-t)**2
 
         return tangentex,tangentey
+
 
     def calcula_angulo_rotacao(self,pontostgt):
         angulo = math.atan2(pontostgt[0],pontostgt[1])
@@ -256,7 +282,7 @@ def leituraCurvas(arquivo):
     for index, line in enumerate(linhas):
         aux = line.split(' ')
         primeiro = int(aux[0])
-        ultimo = int(aux[2])
+        ultimo = int(aux[len(aux)-1])
         if index not in decisao[primeiro]:
             decisao[primeiro].append(index)
         if index not in decisao[ultimo]:
@@ -282,6 +308,17 @@ def calc_bezier(pnt1,pnt2,pnt3,t):
         UmMenosT = 1 - t
         b1 = float(ponto1.x) * UmMenosT * UmMenosT + float(ponto2.x) * 2 * UmMenosT * t + float(ponto3.x) * t*t
         b2 = float(ponto1.y) * UmMenosT * UmMenosT + float(ponto2.y) * 2 * UmMenosT * t + float(ponto3.y) * t*t
+        return(b1,b2)
+
+def calc_bezier4 (pnt1,pnt2,pnt3,pnt4,t):
+        ponto1 = pontos[pnt1]
+        ponto2 = pontos[pnt2]
+        ponto3 = pontos[pnt3]
+        ponto4 = pontos[pnt4]
+        UmMenosT = 1 - t
+
+        b1= (1-t)**3 * float(ponto1.x) + 3 * t * (1-t)**2 * float(ponto2.x) + 3 * t**2 * (1-t) * float(ponto3.x) + t**3 * float(ponto4.x)
+        b2 = UmMenosT**3 * float(ponto1.y) + 3 * t * (UmMenosT)**2 * float(ponto2.y) + 3 * t**2 * (UmMenosT) * float(ponto3.y) + t**3 * float(ponto4.y)
 
         return(b1,b2)
 
@@ -295,22 +332,45 @@ def calculaDistancia(ponto1,ponto2):
 
 def calculaComprimentoDaCurva(curva):
 
-    ponto1 = curvas[curva][0]
-    ponto2 = curvas[curva][1]
-    ponto3 = curvas[curva][2]
+    if len(curvas[curva]) == 3:
+        ponto1 = curvas[curva][0]
+        ponto2 = curvas[curva][1]
+        ponto3 = curvas[curva][2]
 
-    DeltaT = 1.0/50
-    t=DeltaT
-    ComprimentoTotalDaCurva = 0
-    P1 = calc_bezier(ponto1,ponto2,ponto3,t)
-    while(t<1.0):
-        P2 = calc_bezier(ponto1,ponto2,ponto3,t)
+        DeltaT = 1.0/50
+        t=DeltaT
+        ComprimentoTotalDaCurva = 0
+        P1 = calc_bezier(ponto1,ponto2,ponto3,t)
+        while(t<1.0):
+            P2 = calc_bezier(ponto1,ponto2,ponto3,t)
+            ComprimentoTotalDaCurva += calculaDistancia(P1,P2)
+            P1 = P2
+            t += DeltaT
+
         ComprimentoTotalDaCurva += calculaDistancia(P1,P2)
-        P1 = P2
-        t += DeltaT
+    
+    elif len(curvas[curva]) == 4:
+        ponto1 = curvas[curva][0]
+        ponto2 = curvas[curva][1]
+        ponto3 = curvas[curva][2]
+        ponto4 = curvas[curva][3]
 
-    ComprimentoTotalDaCurva += calculaDistancia(P1,P2)
+        DeltaT = 1.0/50
+        t=DeltaT
+        ComprimentoTotalDaCurva = 0
+        P1 = calc_bezier4(ponto1,ponto2,ponto3,ponto4,t)
+        while(t<1.0):
+            P2 = calc_bezier4(ponto1,ponto2,ponto3,ponto4,t)
+            ComprimentoTotalDaCurva += calculaDistancia(P1,P2)
+            P1 = P2
+            t += DeltaT
+
+        ComprimentoTotalDaCurva += calculaDistancia(P1,P2)    
+    
+    
+    
     return ComprimentoTotalDaCurva
+
 
 def comprimentos():
     global curvas
@@ -332,9 +392,14 @@ def define_bezier():
     for index, pont in enumerate(curvas):
         t = 0
         while t <= 1:
-            bez = calc_bezier (pont[0],pont[1],pont[2],t)
-            bezier[index].append((bez[0],bez[1]))
-            t += 0.001
+            if len(pont) == 3:
+                bez = calc_bezier (pont[0],pont[1],pont[2],t)
+                bezier[index].append((bez[0],bez[1]))
+                t += 0.001
+            elif len(pont) == 4:
+                bez = calc_bezier4(pont[0],pont[1],pont[2],pont[3],t)
+                bezier[index].append((bez[0],bez[1]))
+                t += 0.001
 
 def desenha_bezier(indice):
 
@@ -369,25 +434,25 @@ def trac_bezier():
 def primeira_curva():
     player.curva = random.randint(0,len(curvas)-1) 
     player.ponto_saida = curvas[player.curva][0]
-    player.ponto_chegada = curvas[player.curva][2]
+    player.ponto_chegada = curvas[player.curva][len(curvas[player.curva])-1]
 
 def inicializa_inimigos():
     global inimigos
-    for x in range(0,10):
+    for x in range(0,5):
         inimigos.append(None)
     for index, i in enumerate(inimigos):
         inimigos[index] = Personagem()
         inimigos[index].t = random.random()
-        inimigos[index].velocidade = 30
+        inimigos[index].velocidade = 10
         inimigos[index].curva = random.randint(0,len(curvas)-1)
         inimigos[index].proxima = 0
         inimigos[index].inimigo = True
     
         if index < 5:
             inimigos[index].ponto_saida = curvas[inimigos[index].curva][0]
-            inimigos[index].ponto_chegada = curvas[inimigos[index].curva][2]
+            inimigos[index].ponto_chegada = curvas[inimigos[index].curva][len(curvas[inimigos[index].curva])-1]
         else:
-            inimigos[index].ponto_saida = curvas[inimigos[index].curva][2]
+            inimigos[index].ponto_saida = curvas[inimigos[index].curva][len(curvas[inimigos[index].curva])-1]
             inimigos[index].ponto_chegada = curvas[inimigos[index].curva][0]
             inimigos[index].voltando = 1
 
@@ -423,8 +488,8 @@ def init():
     
     # Define a cor do fundo da tela (BRANCO) 
     glClearColor(1.0, 1.0, 1.0, 1.0)
-    pontos = leitura("pontos.txt")
-    curvas = leituraCurvas("Curvas.txt")
+    pontos = leitura("pontos2.txt")
+    curvas = leituraCurvas("curvas2.txt")
     define_bezier()
     inicializa_inimigos()
     comprimentos()
@@ -469,14 +534,7 @@ def reshape(w: int, h: int):
 # Funcao que exibe os desenhos na tela
 #
 # **********************************************************************
-def colisao_envelope(ini,play):
-    if (abs(ini.x - play.x) > 2 + 2):
-        return False
-    elif abs(ini.y - ini.y) > 3 + 3:
-        return False
 
-    return True 
-    
 def perdeu():
     PA = Ponto()
     PB = Ponto()
@@ -494,7 +552,7 @@ def perdeu():
         PD.set(x.xs[0],x.ys[0])
         PE.set(x.xs[1],x.ys[1])
         PF.set(x.xs[2],x.ys[2])
-
+ 
         if x.voltando == 1:
             init = 1 - x.t
         else:
@@ -509,17 +567,34 @@ def perdeu():
         difabs = abs(init-playt)
         difabs = round(difabs,3)
 
-
-        if x.curva == player.curva and difabs <= 0.1:
-            if HaInterseccao(PA,PB,PE,PF):
+        if x.curva == player.curva:
+            if HaInterseccao(PA,PB,PD,PE):
+                print(1)
                 return True
-            elif HaInterseccao(PA,PB,PD,PE):
+            elif HaInterseccao(PA,PB,PE,PF):
+                print(2)
+                return True
+            elif HaInterseccao(PA,PB,PD,PF):
+                print(3)
                 return True
             elif HaInterseccao(PB,PC,PD,PE):
+                print(4)
                 return True
-            elif HaInterseccao(PB,PC,PD,PF):
+            elif (HaInterseccao(PB,PC,PD,PE)):
+                print(5)
                 return True
- 
+            elif HaInterseccao(PB,PC,PE,PF):
+                print(6)
+                return True
+            elif HaInterseccao(PA,PC,PD,PE):
+                print(7)
+                return True
+            elif HaInterseccao(PA,PC,PE,PF):
+                print(8)
+                return True
+            elif HaInterseccao(PA,PC,PD,PF):
+                print(9)
+                return True
     return False
 
 def display():
@@ -537,12 +612,14 @@ def display():
     for x in inimigos:
         x.desenha_personagem()
 
-    if perdeu():
-        os._exit(0)
+
     if player.parado == False:
         player.avanca()
     for x in inimigos:
         x.avanca()
+
+    if perdeu():
+        os._exit(0)
 
 
 
