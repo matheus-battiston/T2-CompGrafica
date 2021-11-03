@@ -15,12 +15,12 @@ decisao = []
 tamanho_curva = []
 bezier = []
 
+
 class Personagem:
     def __init__(self):
         self.x = 0
         self.y = 0
         self.t = 0
-        self.z = 0
         self.curva = 0
         self.proxima = 99
         self.inicio = 99
@@ -32,8 +32,8 @@ class Personagem:
         self.selecionado = 0
         self.parado = False
         self.inimigo = False
-        self.xs =[0,-2,2]
-        self.ys = [3,-3,-3]
+        self.x_atual =[0,-2,2]
+        self.y_atual = [3,-3,-3]
         self.x1 = 0
         self.y1 = 3
         self.x2 = -2
@@ -41,176 +41,12 @@ class Personagem:
         self.x3 = 2
         self.y3 = -3
 
-    def get_pontos(self):
-        curva_atual = self.curva
-        if self.voltando ==0:
-            if len(curvas[curva_atual]) == 3:
-                a = curvas[curva_atual][0]
-                b = curvas[curva_atual][1]
-                c = curvas[curva_atual][2]
-            elif len(curvas[curva_atual]) == 4:
-                a = curvas[curva_atual][0]
-                b = curvas[curva_atual][1]
-                c = curvas[curva_atual][2]
-                d = curvas[curva_atual][3]
-
-        elif self.voltando == 1:
-            if len(curvas[curva_atual]) == 3:
-                a = curvas[curva_atual][2]
-                b = curvas[curva_atual][1]
-                c = curvas[curva_atual][0]
-
-            elif len(curvas[curva_atual]) == 4:
-                a = curvas[curva_atual][3]
-                b = curvas[curva_atual][2]
-                c = curvas[curva_atual][1]
-                d = curvas[curva_atual][0]
-
-
-
-        if len(curvas[curva_atual]) == 3:
-            return a,b,c
-        elif len(curvas[curva_atual]) == 4:
-            return a,b,c,d
-
-
-
-    def avanca(self):
-        global pontos
-        global curvas
-        curva_atual = self.curva
-        proxima_curva = self.proxima
-
-        t = self.t
-        pnts = self.get_pontos()
-
-
-        if self.t <= 1:
-            UmMenosT = 1 - t
-            if len(pnts) == 3:
-                b1,b2 = calc_bezier(pnts[0],pnts[1],pnts[2],t)
-            elif len(pnts) == 4:
-                b1,b2 = calc_bezier4(pnts[0],pnts[1],pnts[2],pnts[3],t)
-
-            self.x = b1
-            self.y = b2
-            deltat = (self.velocidade * 0.033)/tamanho_curva[self.curva]
-            self.t = round(self.t + deltat, 10)
-        if self.t >= 1:
-            self.t = 0
-            self.selecionado = 0
-            self.voltando = self.vai_voltar
-            self.vai_voltar = 0 
-            self.curva = self.proxima
-            if self.voltando == 0:
-                self.ponto_saida = int(curvas[self.curva][0])
-                self.ponto_chegada = int(curvas[self.curva][len(curvas[self.curva])-1])
-            else:
-                self.ponto_saida = int(curvas[self.curva][len(curvas[self.curva])-1])
-                self.ponto_chegada = int(curvas[self.curva][0])
-            
-
-        if self.t >= 0.5 and self.selecionado != 1 :
-            self.prox_curva()
-            self.selecionado = 1
-
-    def prox_curva(self):
-        global decisao
-        curva_atual = self.curva
-        ponto_final = self.ponto_chegada
-        aleatorio = random.randint(0,len(decisao[ponto_final])-1)
-        self.proxima = decisao[ponto_final][aleatorio]
-
-        if self.ponto_chegada == curvas[self.proxima][0]:
-            self.vai_voltar = 0
-        else:
-            self.vai_voltar = 1
-
-    def select_nova_curva(self):
-        curva_atual = self.curva
-        ponto_final = self.ponto_chegada
-        proxima = self.proxima
-
-        if len(decisao[ponto_final]) == 1:
-            pass
-        else:
-            if self.proxima == 99:
-                self.proxima = decisao[ponto_final][0]
-            index = decisao[ponto_final].index(self.proxima)
-            if index == len(decisao[ponto_final])-1:
-                self.proxima = decisao[ponto_final][0]
-            else:
-                self.proxima = decisao[ponto_final][index+1]
-        
-            if self.ponto_chegada == curvas[self.proxima][0]:
-                self.vai_voltar = 0
-            else:
-                self.vai_voltar = 1
-
-    def voltar(self):
-        if self.voltando == 1:
-            self.voltando = 0
-        else:
-            self.voltando = 1
-        self.selecionado = 0
-        self.t = 1-self.t
-        aux = self.ponto_chegada
-        self.ponto_chegada = self.ponto_saida
-        self.ponto_saida = aux
-        self.proxima = 99
-        if self.t >= 0.5:
-            self.prox_curva()
-            self.selecionado = 1
-
-    def translate(self):
-        self.xs[0] = self.xs[0] +self.x
-        self.xs[1] = self.xs[1] +self.x
-        self.xs[2] = self.xs[2] + self.x
-        self.ys[0] = self.ys[0] + self.y
-        self.ys[1] = self.y+self.ys[1]
-        self.ys[2] = self.y+self.ys[2]
-
-    def rotate(self,angulo):
-        angulo = math.radians(angulo)
-        
-        
-        self.xs[0] = (self.x1 * math.cos(angulo) - self.y1 * math.sin(angulo))
-        self.ys[0] = (self.x1 * math.sin(angulo) + self.y1 * math.cos(angulo))
-        self.xs[1] = (self.x2 * math.cos(angulo) - self.y2 * math.sin(angulo))
-        self.ys[1] = (self.x2 * math.sin(angulo) + self.y2 * math.cos(angulo))
-        self.xs[2] = (self.x3 * math.cos(angulo) - self.y3 * math.sin(angulo))
-        self.ys[2] = (self.x3 * math.sin(angulo) + self.y3 * math.cos(angulo))
-                 
-    def desenha_personagem(self):
-        tangente = self.calcula_pontos_tgt()
-        rota = self.calcula_angulo_rotacao(tangente)
-
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-
-        glTranslatef(self.x,self.y,0)
-        glRotatef(-rota,0,0,1)
-        self.rotate(rota)
-        self.translate()
-
-        glBegin(GL_TRIANGLES)
-        if self.inimigo == True:
-            glColor(0,1,0)
-        else:
-            glColor(0,0,1)
-        glVertex2f(0,3)
-        glVertex2f(-2,-3)
-        glVertex2f(2,-3)
-
-        glEnd()
-
-
+#Calculos *********************************************************************************
+    #Função que vai calcular os pontos da reta tangente a curva em que o personagem está
     def calcula_pontos_tgt(self):
         global pontos, curvas
         t = self.t
-
         pnts = self.get_pontos()
-
         if len(pnts) == 3:
             a = float(pontos[pnts[0]].x)
             b = float(pontos[pnts[1]].x)
@@ -236,20 +72,201 @@ class Personagem:
 
         return tangentex,tangentey
 
-
+    #Função que recebe os pontos da reta tangente e calcula o angulo para a rotação do personagem
     def calcula_angulo_rotacao(self,pontostgt):
         angulo = math.atan2(pontostgt[0],pontostgt[1])
         angulo = math.degrees(angulo)
 
         return angulo
 
+
+#*********************************************************************************
+
+#Transformações para manter o controle da posição e poder calcular a colisão *********************************************************************************
+    #FUnção que irá armazenar onde está o personagem após uma translação
+    def translate(self):
+        self.x_atual[0] = self.x_atual[0] +self.x
+        self.x_atual[1] = self.x_atual[1] +self.x
+        self.x_atual[2] = self.x_atual[2] + self.x
+        self.y_atual[0] = self.y_atual[0] + self.y
+        self.y_atual[1] = self.y+self.y_atual[1]
+        self.y_atual[2] = self.y+self.y_atual[2]
+
+    #Função que irá armazenar onde está o personagem após uma rotação
+    def rotate(self,angulo):
+        angulo = math.radians(angulo)
+        
+        self.x_atual[0] = (self.x1 * math.cos(angulo) - self.y1 * math.sin(angulo))
+        self.y_atual[0] = (self.x1 * math.sin(angulo) + self.y1 * math.cos(angulo))
+        self.x_atual[1] = (self.x2 * math.cos(angulo) - self.y2 * math.sin(angulo))
+        self.y_atual[1] = (self.x2 * math.sin(angulo) + self.y2 * math.cos(angulo))
+        self.x_atual[2] = (self.x3 * math.cos(angulo) - self.y3 * math.sin(angulo))
+        self.y_atual[2] = (self.x3 * math.sin(angulo) + self.y3 * math.cos(angulo))
+                 
+#*********************************************************************************
+
+#Movimentação *********************************************************************************
+
+    #Função que irá cuidar do processo de avanço do personagem
+    def avanca(self,tempo):
+        global pontos
+        global curvas
+        curva_atual = self.curva
+        proxima_curva = self.proxima
+        t = self.t
+        pnts = self.get_pontos()
+        x = tempo
+        if self.t <= 1:
+            UmMenosT = 1 - t
+            if len(pnts) == 3:
+                b1,b2 = calc_bezier(pnts[0],pnts[1],pnts[2],t)
+            elif len(pnts) == 4:
+                b1,b2 = calc_bezier4(pnts[0],pnts[1],pnts[2],pnts[3],t)
+
+            self.x = b1
+            self.y = b2
+            deltat = (self.velocidade * tempo)/tamanho_curva[self.curva]
+            self.t = round(self.t + deltat, 10)
+        if self.t >= 1:
+            self.chegou_no_fim()
+        
+        if self.t >= 0.5 and self.selecionado != 1 :
+            self.prox_curva()
+            self.selecionado = 1
+
+    #Função que será chamada quando um personagem chegar no fim da curva
+    #Altera os valores referentes a curva para que contenham os da proxima curva a assumir
+    #Mantém controle da direção em que está indo em relação a curva
+    def chegou_no_fim(self):
+        self.t = 0
+        self.selecionado = 0
+        self.voltando = self.vai_voltar
+        self.vai_voltar = 0 
+        self.curva = self.proxima
+        if self.voltando == 0:
+            self.ponto_saida = int(curvas[self.curva][0])
+            self.ponto_chegada = int(curvas[self.curva][len(curvas[self.curva])-1])
+        else:
+            self.ponto_saida = int(curvas[self.curva][len(curvas[self.curva])-1])
+            self.ponto_chegada = int(curvas[self.curva][0])
+
+    #Função que define de forma aleatoria qual a proxima curva do personagem
+    #Também armazena a direção da curva que o personagem estará indo
+    def prox_curva(self):
+        global decisao
+        curva_atual = self.curva
+        ponto_final = self.ponto_chegada
+        aleatorio = random.randint(0,len(decisao[ponto_final])-1)
+        self.proxima = decisao[ponto_final][aleatorio]
+
+        if self.ponto_chegada == curvas[self.proxima][0]:
+            self.vai_voltar = 0
+        else:
+            self.vai_voltar = 1
+
+    #Função que seleciona de forma circular qual vai ser a proxima curva
+    def select_nova_curva(self):
+        curva_atual = self.curva
+        ponto_final = self.ponto_chegada
+        proxima = self.proxima
+
+        if len(decisao[ponto_final]) == 1:
+            pass
+        else:
+            if self.proxima == 99:
+                self.proxima = decisao[ponto_final][0]
+            index = decisao[ponto_final].index(self.proxima)
+            if index == len(decisao[ponto_final])-1:
+                self.proxima = decisao[ponto_final][0]
+            else:
+                self.proxima = decisao[ponto_final][index+1]
+        
+            if self.ponto_chegada == curvas[self.proxima][0]:
+                self.vai_voltar = 0
+            else:
+                self.vai_voltar = 1
+
+    #Função que faz o personagem alterar seu movimento para a direção contraria
+    #Também altera referencias em relação a ponto de saida e ponto de chegada de uma curva
+    def voltar(self):
+        if self.voltando == 1:
+            self.voltando = 0
+        else:
+            self.voltando = 1
+        self.selecionado = 0
+        self.t = 1-self.t
+        aux = self.ponto_chegada
+        self.ponto_chegada = self.ponto_saida
+        self.ponto_saida = aux
+        self.proxima = 99
+        if self.t >= 0.5:
+            self.prox_curva()
+            self.selecionado = 1
+
+    #Função que retorna os pontos da curva atual do personagem
+    def get_pontos(self):
+        curva_atual = self.curva
+        if self.voltando ==0:
+            if len(curvas[curva_atual]) == 3:
+                a = curvas[curva_atual][0]
+                b = curvas[curva_atual][1]
+                c = curvas[curva_atual][2]
+            elif len(curvas[curva_atual]) == 4:
+                a = curvas[curva_atual][0]
+                b = curvas[curva_atual][1]
+                c = curvas[curva_atual][2]
+                d = curvas[curva_atual][3]
+
+        elif self.voltando == 1:
+            if len(curvas[curva_atual]) == 3:
+                a = curvas[curva_atual][2]
+                b = curvas[curva_atual][1]
+                c = curvas[curva_atual][0]
+
+            elif len(curvas[curva_atual]) == 4:
+                a = curvas[curva_atual][3]
+                b = curvas[curva_atual][2]
+                c = curvas[curva_atual][1]
+                d = curvas[curva_atual][0]
+
+        if len(curvas[curva_atual]) == 3:
+            return a,b,c
+        elif len(curvas[curva_atual]) == 4:
+            return a,b,c,d
+
+#*********************************************************************************
+
+#Desenho Personagem *********************************************************************************
+    def desenha_personagem(self):
+        tangente = self.calcula_pontos_tgt()
+        rota = self.calcula_angulo_rotacao(tangente)
+
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+
+        glTranslatef(self.x,self.y,0)
+        glRotatef(-rota,0,0,1)
+        self.rotate(rota)
+        self.translate()
+
+        glBegin(GL_TRIANGLES)
+        if self.inimigo == True:
+            glColor(0,1,0)
+        else:
+            glColor(0,0,1)
+        glVertex2f(0,3)
+        glVertex2f(-2,-3)
+        glVertex2f(2,-3)
+
+        glEnd()
+
+
+
 #**************************************************************************************************************************
 #Leituras
 
 player = Personagem()
 curvas = []
-
-
 
 def leitura(arquivo):
     ponto = []
@@ -300,7 +317,7 @@ def leituraCurvas(arquivo):
 
 #**************************************************************************************************************************************
 #Calculos
-
+#Funçao que recebe os pontos de uma curva de 3 pontos e retorna o ponto referente a aquele valor de T
 def calc_bezier(pnt1,pnt2,pnt3,t):
         ponto1 = pontos[pnt1]
         ponto2 = pontos[pnt2]
@@ -310,6 +327,7 @@ def calc_bezier(pnt1,pnt2,pnt3,t):
         b2 = float(ponto1.y) * UmMenosT * UmMenosT + float(ponto2.y) * 2 * UmMenosT * t + float(ponto3.y) * t*t
         return(b1,b2)
 
+#Funçao que recebe os pontos de uma curva de 4 pontos e retorna o ponto referente a aquele valor de T
 def calc_bezier4 (pnt1,pnt2,pnt3,pnt4,t):
         ponto1 = pontos[pnt1]
         ponto2 = pontos[pnt2]
@@ -322,14 +340,7 @@ def calc_bezier4 (pnt1,pnt2,pnt3,pnt4,t):
 
         return(b1,b2)
 
-def calculaDistancia(ponto1,ponto2):
-    xa = ponto1[0]
-    ya = ponto1[1]
-    xb = ponto2[0]
-    yb = ponto2[1]
-    z = ((xb-xa)**2 + (yb-ya)**2)
-    return z
-
+#Função que calcula o comprimento de uma curva dado o seu indice
 def calculaComprimentoDaCurva(curva):
 
     if len(curvas[curva]) == 3:
@@ -366,25 +377,29 @@ def calculaComprimentoDaCurva(curva):
             t += DeltaT
 
         ComprimentoTotalDaCurva += calculaDistancia(P1,P2)    
-    
-    
-    
     return ComprimentoTotalDaCurva
 
 
+#Função que recebe dois pontos e calcula a distancia entre eles
+def calculaDistancia(ponto1,ponto2):
+    xa = ponto1[0]
+    ya = ponto1[1]
+    xb = ponto2[0]
+    yb = ponto2[1]
+    z = ((xb-xa)**2 + (yb-ya)**2)
+    return z
+
+
+#Função que calcula e armazena o tamanho de uma curva
+#Cada posição da lista tamanho_curva é referente a curva de mesmo indice
 def comprimentos():
     global curvas
     for index, x in enumerate(curvas):
         comprimento = calculaComprimentoDaCurva(index)
         tamanho_curva.append(comprimento)
         
-
-#**************************************************************************************************************************************
-
-
-#**************************************************************************************************************************************
-#Desenhos
-
+#Função que define os pontos de uma curva de bezier e os armazena
+#Cada posição da lista bezier contém uma lista de pontos e é referente a curva de mesmo indice
 def define_bezier():
     global bezier
     for x in range (0,len(curvas)):
@@ -401,14 +416,14 @@ def define_bezier():
                 bezier[index].append((bez[0],bez[1]))
                 t += 0.001
 
-def desenha_bezier(indice):
 
-    glBegin(GL_LINE_STRIP)
-    for x in bezier[indice]:
-        glVertex2f(x[0],x[1])
+#**************************************************************************************************************************************
 
-    glEnd()
 
+#**************************************************************************************************************************************
+#Desenhos
+
+#Função que irá desenhar as curvas
 def trac_bezier():
     global bezier
     t = 0
@@ -416,7 +431,6 @@ def trac_bezier():
     glShadeModel(GL_FLAT)
 
     for index, x in enumerate(bezier):
-
         if index == player.proxima:
             glColor3f(0,1,0)
             desenha_bezier(index)
@@ -427,15 +441,28 @@ def trac_bezier():
             glColor3f(1,0,0)
             desenha_bezier(index)
 
+#Função auxiliar de desenho
+def desenha_bezier(indice):
+
+    glBegin(GL_LINE_STRIP)
+    for x in bezier[indice]:
+        glVertex2f(x[0],x[1])
+
+    glEnd()
+
+
 
 #**************************************************************************************************************************************
 
-
+#Inicializações ************************************************************************************************************
+#Função que inicializa o player
 def primeira_curva():
     player.curva = random.randint(0,len(curvas)-1) 
     player.ponto_saida = curvas[player.curva][0]
     player.ponto_chegada = curvas[player.curva][len(curvas[player.curva])-1]
 
+
+#Função que inicializa os inimigos
 def inicializa_inimigos():
     global inimigos
     for x in range(0,5):
@@ -455,6 +482,63 @@ def inicializa_inimigos():
             inimigos[index].ponto_saida = curvas[inimigos[index].curva][len(curvas[inimigos[index].curva])-1]
             inimigos[index].ponto_chegada = curvas[inimigos[index].curva][0]
             inimigos[index].voltando = 1
+
+#************************************************************************************************************
+
+#Função que define se o jogo deve ou não terminar
+def perdeu():
+    PA = Ponto()
+    PB = Ponto()
+    PC = Ponto()
+    PD = Ponto()
+    PE = Ponto()
+    PF = Ponto()
+
+    PA.set(player.x_atual[0],player.y_atual[0])
+    PB.set(player.x_atual[1],player.y_atual[1])
+    PC.set(player.x_atual[2],player.y_atual[2])
+
+    for x in inimigos:
+
+        PD.set(x.x_atual[0],x.y_atual[0])
+        PE.set(x.x_atual[1],x.y_atual[1])
+        PF.set(x.x_atual[2],x.y_atual[2])
+ 
+        if x.voltando == 1:
+            init = 1 - x.t
+        else:
+            init = x.t
+
+        if player.voltando == 1:
+            playt = 1-player.t
+        else:
+            playt = player.t
+
+
+        difabs = abs(init-playt)
+        difabs = round(difabs,3)
+
+        if x.curva == player.curva:
+            if HaInterseccao(PA,PB,PD,PE):
+                return True
+            elif HaInterseccao(PA,PB,PE,PF):
+                return True
+            elif HaInterseccao(PA,PB,PD,PF):
+                return True
+            elif HaInterseccao(PB,PC,PD,PE):
+                return True
+            elif (HaInterseccao(PB,PC,PD,PE)):
+                return True
+            elif HaInterseccao(PB,PC,PE,PF):
+                return True
+            elif HaInterseccao(PA,PC,PD,PE):
+                return True
+            elif HaInterseccao(PA,PC,PE,PF):
+                return True
+            elif HaInterseccao(PA,PC,PD,PF):
+                return True
+    return False
+
 
 
 def intersec2d(k: Ponto, l: Ponto, m: Ponto, n: Ponto):
@@ -535,72 +619,19 @@ def reshape(w: int, h: int):
 #
 # **********************************************************************
 
-def perdeu():
-    PA = Ponto()
-    PB = Ponto()
-    PC = Ponto()
-    PD = Ponto()
-    PE = Ponto()
-    PF = Ponto()
 
-    PA.set(player.xs[0],player.ys[0])
-    PB.set(player.xs[1],player.ys[1])
-    PC.set(player.xs[2],player.ys[2])
-
-    for x in inimigos:
-
-        PD.set(x.xs[0],x.ys[0])
-        PE.set(x.xs[1],x.ys[1])
-        PF.set(x.xs[2],x.ys[2])
- 
-        if x.voltando == 1:
-            init = 1 - x.t
-        else:
-            init = x.t
-
-        if player.voltando == 1:
-            playt = 1-player.t
-        else:
-            playt = player.t
-
-
-        difabs = abs(init-playt)
-        difabs = round(difabs,3)
-
-        if x.curva == player.curva:
-            if HaInterseccao(PA,PB,PD,PE):
-                print(1)
-                return True
-            elif HaInterseccao(PA,PB,PE,PF):
-                print(2)
-                return True
-            elif HaInterseccao(PA,PB,PD,PF):
-                print(3)
-                return True
-            elif HaInterseccao(PB,PC,PD,PE):
-                print(4)
-                return True
-            elif (HaInterseccao(PB,PC,PD,PE)):
-                print(5)
-                return True
-            elif HaInterseccao(PB,PC,PE,PF):
-                print(6)
-                return True
-            elif HaInterseccao(PA,PC,PD,PE):
-                print(7)
-                return True
-            elif HaInterseccao(PA,PC,PE,PF):
-                print(8)
-                return True
-            elif HaInterseccao(PA,PC,PD,PF):
-                print(9)
-                return True
-    return False
+anterior = time.time()
 
 def display():
     global cont
     global pontos
     global inimigos
+    global anterior
+
+    agora = time.time()
+    tempo = agora - anterior
+    anterior = agora
+
     # Limpa a tela com  a cor de fundo
     glClear(GL_COLOR_BUFFER_BIT)
 
@@ -612,16 +643,13 @@ def display():
     for x in inimigos:
         x.desenha_personagem()
 
-
-    if player.parado == False:
-        player.avanca()
-    for x in inimigos:
-        x.avanca()
-
     if perdeu():
         os._exit(0)
 
-
+    if player.parado == False:
+        player.avanca(tempo)
+    for x in inimigos:
+        x.avanca(tempo)
 
     glutSwapBuffers()
 
@@ -635,18 +663,20 @@ def display():
 # Variaveis Globais
 nFrames, TempoTotal, AccumDeltaT = 0, 0, 0
 oldTime = time.time()
+vezes = 0
 
 def animate():
-    global nFrames, TempoTotal, AccumDeltaT, oldTime
+    global nFrames, TempoTotal, AccumDeltaT, oldTime, vezes
     nowTime = time.time()
     dt = nowTime - oldTime
     oldTime = nowTime
+
 
     AccumDeltaT += dt
     TempoTotal += dt
     nFrames += 1
     
-    if AccumDeltaT > 1.0/30:  # fixa a atualização da tela em 30
+    if AccumDeltaT > 1.0/120:  # fixa a atualização da tela em 30
         AccumDeltaT = 0
         glutPostRedisplay()
 
@@ -673,23 +703,23 @@ def keyboard(*args):
     glutPostRedisplay()
 
 # **********************************************************************
-#  arrow_keys ( a_keys: int, x: int, y: int )
+#  arrow_key_atual ( a_key_atual: int, x: int, y: int )
 #
 #
 # **********************************************************************
 
-def arrow_keys(a_keys: int, x: int, y: int):
+def arrow_key_atual(a_key_atual: int, x: int, y: int):
     global Subdivisoes
     global Cel
     global linhas
 
-    if a_keys == GLUT_KEY_UP:         # Se pressionar UP
+    if a_key_atual == GLUT_KEY_UP:         # Se pressionar UP
         pass
-    if a_keys == GLUT_KEY_DOWN:      # Se pressionar DOWN
+    if a_key_atual == GLUT_KEY_DOWN:      # Se pressionar DOWN
         player.select_nova_curva ()
-    if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
+    if a_key_atual == GLUT_KEY_LEFT:       # Se pressionar LEFT
         player.voltar()
-    if a_keys == GLUT_KEY_RIGHT:      # Se pressionar RIGHT
+    if a_key_atual == GLUT_KEY_RIGHT:      # Se pressionar RIGHT
         pass
 
     glutPostRedisplay()
@@ -741,10 +771,10 @@ glutKeyboardFunc(keyboard)
 # Define que o tratador de evento para
 # as teclas especiais(F1, F2,... ALT-A,
 # ALT-B, Teclas de Seta, ...).
-# A funcao "arrow_keys" será chamada
+# A funcao "arrow_key_atual" será chamada
 # automaticamente sempre o usuário
 # pressionar uma tecla especial
-glutSpecialFunc(arrow_keys)
+glutSpecialFunc(arrow_key_atual)
 
 #glutMouseFunc(mouse)
 #glutMotionFunc(mouseMove)
