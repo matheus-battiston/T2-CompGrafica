@@ -477,6 +477,7 @@ def desenha_bezier(indice):
 #Função que inicializa o player
 def primeira_curva():
     player.curva = random.randint(0,len(Curvas)-1) 
+    player.t = random.random()
     tamanho = Curvas[player.curva].qntdade_pontos
     player.ponto_saida = Curvas[player.curva].pnts_curva[0]
     player.ponto_chegada = Curvas[player.curva].pnts_curva[tamanho-1]
@@ -491,7 +492,7 @@ def inicializa_inimigos():
         inimigos[index] = Personagem()
         inimigos[index].t = random.random()
         inimigos[index].velocidade = 10
-        inimigos[index].curva = random.randint(0,len(Curvas)-1)
+        inimigos[index].curva = random.choice([x for x in range(len(Curvas)-1) if x != player.curva])
         inimigos[index].proxima = 0
         inimigos[index].inimigo = True
         tamanho = Curvas[inimigos[index].curva].qntdade_pontos -1
@@ -541,22 +542,31 @@ def perdeu():
 
         if x.curva == player.curva:
             if HaInterseccao(PA,PB,PD,PE):
+                print(1)
                 return True
             elif HaInterseccao(PA,PB,PE,PF):
+                print(2)
                 return True
             elif HaInterseccao(PA,PB,PD,PF):
+                print(3)
                 return True
             elif HaInterseccao(PB,PC,PD,PE):
+                print(4)
                 return True
             elif (HaInterseccao(PB,PC,PD,PE)):
+                print(5)
                 return True
             elif HaInterseccao(PB,PC,PE,PF):
+                print(6)
                 return True
             elif HaInterseccao(PA,PC,PD,PE):
+                print(7)
                 return True
             elif HaInterseccao(PA,PC,PE,PF):
+                print(8)
                 return True
             elif HaInterseccao(PA,PC,PD,PF):
+                print(9)
                 return True
     return False
 
@@ -595,8 +605,9 @@ def init():
     glClearColor(1.0, 1.0, 1.0, 1.0)
     pontos = leitura("pontos2.txt")
     curvas = leituraCurvas("curvas2.txt")
-    inicializa_inimigos()
     primeira_curva()
+
+    inicializa_inimigos()
 
    
 # **********************************************************************
@@ -640,6 +651,7 @@ def reshape(w: int, h: int):
 
 
 anterior = time.time()
+inicio = time.time()
 
 def calc_tempo():
     global anterior
@@ -665,13 +677,15 @@ def display():
     for x in inimigos:
         x.desenha_personagem()
 
-    if perdeu():
-        os._exit(0)
 
     if player.parado == False:
         player.avanca(tempo)
     for x in inimigos:
         x.avanca(tempo)
+
+
+    if perdeu():
+        os._exit(0)
 
     glutSwapBuffers()
 
