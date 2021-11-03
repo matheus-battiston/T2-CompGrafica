@@ -542,31 +542,22 @@ def perdeu():
 
         if x.curva == player.curva:
             if HaInterseccao(PA,PB,PD,PE):
-                print(1)
                 return True
             elif HaInterseccao(PA,PB,PE,PF):
-                print(2)
                 return True
             elif HaInterseccao(PA,PB,PD,PF):
-                print(3)
                 return True
             elif HaInterseccao(PB,PC,PD,PE):
-                print(4)
                 return True
             elif (HaInterseccao(PB,PC,PD,PE)):
-                print(5)
                 return True
             elif HaInterseccao(PB,PC,PE,PF):
-                print(6)
                 return True
             elif HaInterseccao(PA,PC,PD,PE):
-                print(7)
                 return True
             elif HaInterseccao(PA,PC,PE,PF):
-                print(8)
                 return True
             elif HaInterseccao(PA,PC,PD,PF):
-                print(9)
                 return True
     return False
 
